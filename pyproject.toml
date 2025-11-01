@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "product-types"
+version = "0.1.0"
+description = "Product/Intersection types for Python with full type hint support"
+readme = "README.md"
+requires-python = ">=3.14"
+license = {text = "MIT"}
+authors = [
+    {name = "Product Types Contributors"}
+]
+keywords = [
+    "types",
+    "typing",
+    "type-hints",
+    "product-types",
+    "intersection-types",
+    "generic-types",
+    "pep695",
+    "pep747"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "typing-extensions>=4.12.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "mypy>=1.11.0",
+    "pyright>=1.1.380",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/product-types"
+Documentation = "https://github.com/yourusername/product-types/blob/main/docs/README.md"
+Repository = "https://github.com/yourusername/product-types"
+Issues = "https://github.com/yourusername/product-types/issues"
+
+[tool.setuptools]
+packages = ["product_types"]
+
+[tool.setuptools.package-data]
+product_types = ["py.typed"]
+
+[tool.mypy]
+python_version = "3.14"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+strict = true
+
+[tool.pyright]
+pythonVersion = "3.14"
+typeCheckingMode = "strict"
