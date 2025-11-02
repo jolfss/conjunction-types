@@ -27,29 +27,15 @@ Usage:
 
 from __future__ import annotations
 
-import sys
-from typing import (
-    Any, TypeVar, Generic, Union, get_args, get_origin,
-    overload, Protocol, runtime_checkable, Iterator, ClassVar
-)
+from typing import Any, Union, get_args, get_origin, Iterator, ClassVar
 from typing_extensions import TypeForm  # PEP 747 support
-from collections.abc import Iterable
-from types import UnionType
+from types import GenericAlias, UnionType
 import weakref
 
-
-__all__ = ['Intersection', 'IntersectionMeta']
-
-
-T = TypeVar('T')
-T_co = TypeVar('T_co', covariant=True)
-
-
-# ============================================================================
-# Type Utilities
-# ============================================================================
-
-def _normalize_union(tp: Any) -> frozenset[type]:
+#
+# type plumbing (runtime inspection)
+#
+def _normalize_union(tp: Any) -> frozenset[type | GenericAlias]:
     """
     Normalize a type expression into a frozenset of component types.
     
@@ -58,6 +44,7 @@ def _normalize_union(tp: Any) -> frozenset[type]:
     - A | B | C -> {A, B, C}
     - A -> {A}
     - Intersection[A | B] -> {A, B}
+    - Some[*Targs] -> {Some[*Targs]} (GenericAlias)
     """
     # Handle Intersection types
     if isinstance(tp, IntersectionMeta):
@@ -78,8 +65,8 @@ def _normalize_union(tp: Any) -> frozenset[type]:
     if tp is type(...) or tp is Ellipsis:
         return frozenset()
     
-    # Single type
-    if isinstance(tp, type):
+    # Single type or GenericAlias
+    if isinstance(tp, type) or isinstance(tp, GenericAlias):
         return frozenset([tp])
     
     raise TypeError(f"Cannot normalize type: {tp}")
@@ -89,11 +76,19 @@ def _types_equal(types1: frozenset[type], types2: frozenset[type]) -> bool:
     """Check if two type sets are equivalent (permutation invariant)."""
     return types1 == types2
 
+def _format_types(types: frozenset[type | GenericAlias]) -> str:
+    """Format a set of types as a union string."""
+    if not types:
+        return '...'
+    return ' | '.join(sorted(t.__name__ for t in types))
+#
+#
+#
 
-# ============================================================================
-# Intersection Metaclass - Handles Type-Level Operations
-# ============================================================================
 
+#
+# intersection implementation
+#
 class IntersectionMeta(type):
     """
     Metaclass for Intersection that handles type-level operations.
@@ -105,8 +100,11 @@ class IntersectionMeta(type):
     - Hashing and equality at the type level
     """
     
-    # Cache for created Intersection types to ensure identity
     _cache: ClassVar[weakref.WeakValueDictionary] = weakref.WeakValueDictionary()
+    """Cache for created Intersection types to ensure identity."""
+
+    _types: frozenset[type]
+    """The types contained by a particular instance of IntersectionMeta."""
     
     def __new__(
         mcs, 
@@ -176,7 +174,7 @@ class IntersectionMeta(type):
         """Hash based on component types (permutation invariant)."""
         return hash(cls._types)
     
-    def __contains__(cls, item: type | IntersectionMeta) -> bool:
+    def __contains__(cls, item: type | GenericAlias | IntersectionMeta) -> bool:
         """
         Check if a type is contained in this Intersection type.
         
@@ -190,7 +188,7 @@ class IntersectionMeta(type):
         elif isinstance(item, type):
             return item in cls._types
         else:
-            # Handle Union types
+            # Handle Generic types
             item_types = _normalize_union(item)
             return item_types.issubset(cls._types)
     
@@ -207,7 +205,7 @@ class IntersectionMeta(type):
             return 'Intersection'
         return f'Intersection[{_format_types(cls._types)}]'
     
-    def __and__(cls, other: IntersectionMeta | type) -> IntersectionMeta:
+    def __and__(cls, other) -> IntersectionMeta:
         """
         Type-level intersection operator.
         
@@ -217,7 +215,7 @@ class IntersectionMeta(type):
         # Check IntersectionMeta first since it's also isinstance of type
         if isinstance(other, IntersectionMeta):
             other_types = other._types
-        elif isinstance(other, type):
+        elif isinstance(other, GenericAlias) or isinstance(other, type):
             other_types = frozenset([other])
         else:
             raise TypeError(f"Cannot combine Intersection with {type(other)}")
@@ -244,7 +242,8 @@ class IntersectionMeta(type):
         """
         Reverse intersection operator for: str & Intersection[float]
         """
-        return cls.__and__(other)
+        # NOTE: cls.__and__(other) won't work here since we could be inside mcs and not any cls
+        return IntersectionMeta.__and__(cls, other)
     
     def __instancecheck__(cls, instance: Any) -> bool:
         """
@@ -278,10 +277,6 @@ class IntersectionMeta(type):
         # Subclass has subset of types
         return subclass._types.issubset(cls._types)
 
-
-# ============================================================================
-# Intersection Class - Handles Value-Level Operations
-# ============================================================================
 
 class Intersection(metaclass=IntersectionMeta):
     """
@@ -441,7 +436,6 @@ class Intersection(metaclass=IntersectionMeta):
             object.__setattr__(wrapped, '_hash', None)
             yield (typ, wrapped)
     
-    
     def to(self, typ: type) -> Any:
         """
         Extract raw values by type.
@@ -462,8 +456,7 @@ class Intersection(metaclass=IntersectionMeta):
         if typ not in self._data:
             raise KeyError(f"Type {typ} not in Intersection")
         return self._data[typ]
-    
-    
+     
     def __and__(self, other: Any) -> Intersection:
         """
         Combine with another Intersection or any value (associative, right-precedence).
@@ -493,19 +486,11 @@ class Intersection(metaclass=IntersectionMeta):
         """
         Reverse & operator: value & Intersection
         """
-        # Wrap other in Intersection if needed
-        if not (type(other).__class__ is IntersectionMeta or 
-                type(other) is Intersection or
-                (isinstance(other, type) and issubclass(other, Intersection))):
-            other = Intersection(other)
-        
-        return other.__and__(self)
+        return Intersection.__and__(self, other)
     
     def __truediv__(self, types: type | TypeForm) -> Intersection:
         """
-        Set difference - remove types from this Intersection.
-        
-        This is a bonus feature for filtering out unwanted types.
+        Set difference - return a new Intersection without a type.
         
         Examples:
             obj / bool -> Removes bool type if present
@@ -520,11 +505,7 @@ class Intersection(metaclass=IntersectionMeta):
         return result
     
     def __eq__(self, other: Any) -> bool:
-        """
-        Equality: same types and same values.
-        
-        Note: Values are compared using ==, so must be comparable.
-        """
+        """Equality: same types and same values."""
         if not isinstance(other, Intersection):
             return False
         
@@ -570,24 +551,3 @@ class Intersection(metaclass=IntersectionMeta):
     def __len__(self) -> int:
         """Number of component values."""
         return len(self._data)
-
-
-# ============================================================================
-# Utility Functions
-# ============================================================================
-
-def _format_types(types: frozenset[type]) -> str:
-    """Format a set of types as a union string."""
-    if not types:
-        return '...'
-    return ' | '.join(sorted(t.__name__ for t in types))
-
-
-# ============================================================================
-# Type Annotations Support
-# ============================================================================
-
-# This allows type checkers to understand Intersection better
-if sys.version_info >= (3, 14):
-    # Future: could use __class_getitem__ annotations
-    pass

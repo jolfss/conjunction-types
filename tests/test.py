@@ -4,6 +4,7 @@ Comprehensive Test Suite for Intersection Type System
 This validates all the planned functionality from the specification.
 """
 from product_types import Intersection
+from typing import Any
 
 type FloatIntStr = Intersection[float | int | str]
 
@@ -13,6 +14,8 @@ def test_type_subset_checking():
     
     # Create types
     float_int_str = Intersection[float | int | str]
+    float_int_str_dictstrstr = float_int_str & dict[str,str]
+
     float_str = Intersection[float | str]
     
     # Subset checking
@@ -22,7 +25,14 @@ def test_type_subset_checking():
     # Single type checking
     assert float in float_int_str, "float should be in Intersection[float|int|str]"
     assert int in float_int_str, "int should be in Intersection[float|int|str]"
-    assert not (dict in float_int_str), "dict should not be in Intersection[float|int|str]"
+    assert dict not in float_int_str, "dict should not be in Intersection[float|int|str]"
+    assert dict[str,str] in float_int_str_dictstrstr, "specialized dict[str,str] should be in Intersection"
+    assert dict[str,int] not in float_int_str_dictstrstr, "this parametrization of dict is not in Intersection"
+    assert int | str in float_int_str, "unions are treated as intersections inside intersections"
+    assert float_int_str | list not in float_int_str_dictstrstr, "intersection classes act as their syntactic union counterpart"
+    assert float_int_str & list not in float_int_str_dictstrstr, "same behavior for & operator"
+    assert dict[str,str] & float_int_str in float_int_str_dictstrstr, "rand"
+
     
     print("✓ Type subset checking works")
 
@@ -42,6 +52,10 @@ def test_type_equivalence():
     
     # Union treated as intersection inside Intersection
     assert Intersection[float | Intersection[str]] == Intersection[float | str], "Should distribute over union"
+
+    assert Intersection[dict[str,str]] != Intersection[dict[str, int]], "Diff. parametrizations should not be equal"
+    assert Intersection[dict[str,dict[str,int]]] == Intersection[dict[str,dict[str,int]]], "Same parametrizations should be equal"
+    assert Intersection[Intersection[int | Intersection[dict[str,int]]] & bool] == Intersection[int | dict[str,int] | bool], "Flatten equivalence"
     
     print("✓ Type equivalence works")
 
@@ -66,7 +80,7 @@ def test_type_construction():
         # Trying to extract bool from str|int should fail
         print("  Note: Type-level validation happens at runtime during extraction")
     except:
-        print("Successfully thrown")
+        print("  Successfully thrown")
     
     print("✓ Type construction works")
 
@@ -156,7 +170,8 @@ def test_partial_extraction():
     float_int_str = Intersection(5, "hello", 0.5)
     
     # Extract subset - should return Intersection
-    float_int = float_int_str[float | int] # NOTE: At runtime this will work, but 
+    float_int : Intersection[float|int] = float_int_str[float | int]  # type: ignore
+    # NOTE: At runtime this will work, but static checker doesn't like this
     
     assert isinstance(float_int, Intersection), "Should return Intersection"
     assert float in float_int, "Should contain float"
