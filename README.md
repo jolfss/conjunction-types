@@ -84,20 +84,20 @@ In formal type theory, an intersection type `A ∧ B` is a value that is *simult
 c: Conjunction[A | B] = Conjunction(a_instance, b_instance)
 
 # Projection yields true instances of the requested type
-x: A = c.to(A)  # ✅ type: A
-y: B = c.to(B)  # ✅ type: B
+x: A = c.to(A)  # type: A
+y: B = c.to(B)  # type: B
 
 # Semantic law: projection is defined iff the type is present
 # Conjunction[T1 | ... | Tn].to(T') <: T'  ⇔  T' ∈ {T1, ..., Tn}
 
 # Subtyping does not hold at the base types:
-issubclass(Conjunction[A | B], A)  # ❌ False
-issubclass(Conjunction[A | B], B)  # ❌ False
+issubclass(Conjunction[A | B], A)  # False
+issubclass(Conjunction[A | B], B)  # False
 
 # But subset relations hold among Conjunction types:
 AB = Conjunction[int | str]
 ABC = Conjunction[int | str | float]
-assert issubclass(AB, ABC)  # ✅ AB <: ABC
+assert issubclass(AB, ABC)  # AB <: ABC
 ```
 
 This mirrors intersection semantics **at use sites** as long as contained objects are **state-disjoint** (no shared mutable state). Broadcasting writes across all members (by intercepting `__setattr__`) is theoretically possible but intentionally omitted due to MRO complexity and low practical gain. In fact, this probably indicates that you really want a new type that groups the shared state together.
@@ -129,10 +129,10 @@ xs: dict[str, str] = c.to(dict[str, str])
 
 | Property        | Type level | Value level | Notes                                                                                 |
 | :-------------- | :--------: | :---------: | :------------------------------------------------------------------------------------ |
-| **Associative** |      ✅     |      ✅      | `(A & B) & C == A & (B & C)`                                                          |
-| **Commutative** |      ✅     |      ❌      | Type-level `&` is set-like; value-level `&` is right-precedence for overlapping types |
-| **Idempotent**  |      ✅     |      ✅      | Duplicates are flattened; merging same type keeps right-hand value                    |
-| **Identity**    |      ✅     |      ✅      | `Conjunction[]` is identity for `&`                                                   |
+| **Associative** |      ✓     |      ✓      | `(A & B) & C == A & (B & C)`                                                          |
+| **Commutative** |      ✓     |      ×      | Type-level `&` is set-like; value-level `&` is right-precedence for overlapping types |
+| **Idempotent**  |      ✓     |      ✓      | Duplicates are flattened; merging same type keeps right-hand value                    |
+| **Identity**    |      ✓     |      ✓      | `Conjunction[]` is identity for `&`                                                   |
 
 ```python
 # Associativity
