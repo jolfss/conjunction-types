@@ -57,7 +57,7 @@ class ConjunctionMeta[ItemTs](type):
     def __subclasscheck__(cls, subclass: Any) -> bool: ...
 
 
-class Conjunction[ItemTs](metaclass=ConjunctionMeta):
+class Conjunction[ItemTs](type, metaclass=ConjunctionMeta):
     #
     # NOTE: We enumerate these constructors since it's not possible to homogenize/flatten out any contained Conjunction[...] within the args.
     # Ideally, we would be able to write something akin to...
@@ -99,6 +99,7 @@ class Conjunction[ItemTs](metaclass=ConjunctionMeta):
     # Runtime types will still track accurately, but for static checking we quit after 16-wide constructor calls.
     # You can always do `Conjunction(T1,...,T16) & Conjunction(T17,...) & ...` if you *really* want all the types.
     #
+    @overload
     def __new__(cls, *vs : Any) -> Conjunction[UnionType]: ... 
     #
     #

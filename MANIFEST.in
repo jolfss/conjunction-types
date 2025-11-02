@@ -1,7 +1,5 @@
 include README.md
 include LICENSE
 include pyproject.toml
-recursive-include docs *.md
-recursive-include examples *.py
 recursive-include tests *.py
-include conjunction-types/py.typed
+include conjunction_types/py.typed

@@ -456,21 +456,34 @@ class Conjunction(metaclass=ConjunctionMeta):
     def __and__(self, other: Any) -> Conjunction:
         """
         Combine with another Conjunction or any value (associative, right-precedence).
-        
+
         self & other creates a new Conjunction with values from both.
         If other is not an Conjunction, it's wrapped in one first.
         If types overlap, right-side (other) takes precedence.
-        
+
         Examples:
             Conjunction(5) & Conjunction("hello") == Conjunction(5, "hello")
             Conjunction(5) & "hello" == Conjunction(5, "hello")
         """
+        import warnings
+
         # If other is not an Conjunction, wrap it
-        if not (type(other).__class__ is ConjunctionMeta or 
+        if not (type(other).__class__ is ConjunctionMeta or
                 type(other) is Conjunction or
                 (isinstance(other, type) and issubclass(other, Conjunction))):
             other = Conjunction(other)
-        
+
+        # Check for overlapping types and warn
+        overlapping_types = set(self._data.keys()) & set(other._data.keys())
+        if overlapping_types:
+            type_names = ", ".join(t.__name__ for t in sorted(overlapping_types, key=lambda t: t.__name__))
+            warnings.warn(
+                f"Type collision in Conjunction merge: {type_names} "
+                f"(right-hand value takes precedence)",
+                UserWarning,
+                stacklevel=2
+            )
+
         # Combine data (right takes precedence)
         new_data = {**self._data, **other._data}
         result = Conjunction.__new__(Conjunction)
