@@ -271,48 +271,6 @@ for typ, wrapped in c.items():
 
 ---
 
-## Advanced (Theory): Monadic Lifting over Conjunctions
-
-> **Status:** not implemented; this section documents a design direction.
-
-`Conjunction` already acts as a *context* that can hold auxiliary state alongside a base type. This suggests a path to **monadic lifting**, where we pair each base type with a monadic carrier and wire `.to()` to honor monadic laws.
-
-### Idea: pair a type with a monadic state
-
-Consider `Conjunction[T | M[T]]`, where `M` is a monad (e.g., `Optional`, `Result[E, _]`, or an application-specific effect type). We could provide combinators that:
-
-* Lift a pure function `f: T → U` to act on the `T`-component and transport effects via the `M[T]` component.
-* Define `bind`/`flat_map` that sequences effects by updating `M[T]` and switching focus to `M[U]`.
-
-Sketch of potential API (illustrative only):
-
-```python
-from typing import TypeVar, Callable
-
-T = TypeVar("T")
-U = TypeVar("U")
-
-# Hypothetical helper signatures
-# (details depend on the chosen monad interface)
-
-def fmap(c: Conjunction[T | M[T]], f: Callable[[T], U]) -> Conjunction[U | M[U]]: ...
-
-def bind(c: Conjunction[T | M[T]], f: Callable[[T], Conjunction[U | M[U]]]) -> Conjunction[U | M[U]]: ...
-
-# And: projection stays type-safe
-u: U = fmap(c, f).to(U)
-```
-
-**Why `.to()` matters:** If `M` hooks into `.to()`, the projection point becomes the natural boundary where effects are interpreted or realized, keeping the product-at-rest / projection-at-use discipline.
-
-### Practical notes
-
-* You likely want a *uniform* monad protocol (e.g., `map`, `flat_map`) to avoid hard-coding special cases.
-* Laws (identity, associativity) can be tested using property-based tests on the `&` and `.to()` interplay.
-* This design remains compatible with the current semantics: it *extends* them rather than changing them.
-
----
-
 ## Advanced (Theory): Monadic and Conjunction-Aware Abstractions
 
 > **Status:** not implemented; this section documents a unified design direction combining Monads, a `@conj` decorator, and Ellipsis-based late casting.
