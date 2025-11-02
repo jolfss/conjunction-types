@@ -52,9 +52,17 @@ assert Conjunction(1, "a") != Conjunction("a", 1)  # values differ
 
 ## Installation
 
+Available on PyPI:
+
 ```bash
+# Using pip
 pip install conjunction-types
+
+# Using uv (recommended)
+uv pip install conjunction-types
 ```
+
+Requires Python 3.12 or later.
 
 ## Conceptual Foundations
 
@@ -423,14 +431,6 @@ This architecture unifies **contextual state**, **intersection-like structure**,
 * Python 3.12+
 * Zero runtime dependencies
 * Works with static type checkers (Pyright, Pylance, mypy)
-
-## Development
-
-```bash
-pip install -e ".[dev]"
-pytest -q
-pyright
-```
 
 ## License
 
