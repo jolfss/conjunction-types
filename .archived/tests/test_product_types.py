@@ -3,6 +3,7 @@ Comprehensive test suite for Intersection/Intersection types.
 
 Tests all features described in the original specification.
 """
+import pytest
 from intersection_types import Intersection, IntersectionMeta, make_intersection_type
 
 
@@ -283,27 +284,31 @@ def test_named_classes():
     print("TEST: Named Intersection Classes")
     print("=" * 60)
     
-    # Define a named class
-    class IntStringFloat(Intersection[int | str | float]):
-        pass
+    # Define a named alias
+    IntStringFloat = Intersection[int | str | float]
     
-    print(f"class IntStringFloat(Intersection[int | str | float]): pass")
+    print(f"IntStringFloat = Intersection[int | str | float]")
     
-    # Create instance
+    # Create instance from alias
     isf = IntStringFloat(5, "hello", 0.2)
     print(f"\nisf = IntStringFloat(5, 'hello', 0.2)")
     print(f"  Result: {isf}")
     print(f"  Type: {type(isf)}")
     print(f"  isf[int] = {isf[int]}")
     
-    # Test type operations
-    class BoolClass(Intersection[bool]):
-        pass
+    # Demonstrate additional aliases
+    BoolIntersection = Intersection[bool]
     
-    print(f"\nclass BoolClass(Intersection[bool]): pass")
-    b = BoolClass(True)
-    print(f"b = BoolClass(True)")
+    print(f"\nBoolIntersection = Intersection[bool]")
+    b = BoolIntersection(True)
+    print(f"b = BoolIntersection(True)")
     print(f"  Result: {b}")
+    
+    # Subclassing should raise a TypeError
+    print("\nAttempting to subclass should raise TypeError")
+    with pytest.raises(TypeError):
+        class _Invalid(Intersection[int | str]):
+            pass
     
     print("\n✓ Named Intersection classes working\n")
 

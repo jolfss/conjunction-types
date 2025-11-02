@@ -1,10 +1,13 @@
-from typing import overload, Any, get_args, get_origin, Union
-from typing_extensions import TypeForm as TypeExpr 
+from __future__ import annotations
+
+from typing import Any, Union, overload, get_args, get_origin
+from typing_extensions import TypeForm as TypeExpr
 from types import UnionType
-import sys
+
+TypeSet = frozenset[type[Any]]
 
 
-def _extract_types(type_expr: Any) -> frozenset[type]:
+def _extract_types(type_expr: Any) -> TypeSet:
     """
     Extract all types from a type expression, flattening unions and intersections.
     This ensures that Intersection[int | str] and Intersection[int] & Intersection[str] are equivalent.
@@ -19,8 +22,14 @@ def _extract_types(type_expr: Any) -> frozenset[type]:
     
     # Handle Union types (int | str or Union[int, str])
     origin = get_origin(type_expr)
+    if origin is TypeExpr:
+        extracted: set[type[Any]] = set()
+        for arg in get_args(type_expr):
+            extracted.update(_extract_types(arg))
+        return frozenset(extracted)
+
     if origin is Union or origin is UnionType:
-        result = set()
+        result: set[type[Any]] = set()
         for arg in get_args(type_expr):
             result.update(_extract_types(arg))
         return frozenset(result)
@@ -36,7 +45,7 @@ def _extract_types(type_expr: Any) -> frozenset[type]:
     raise TypeError(f"Cannot extract types from {type_expr}")
 
 
-def _normalize_type_expr(type_expr: Any) -> frozenset[type]:
+def _normalize_type_expr(type_expr: Any) -> TypeSet:
     """
     Normalize a type expression into a canonical frozenset of types.
     This handles flattening of nested intersections and unions.
@@ -55,9 +64,17 @@ class IntersectionMeta[IntersectionTs](type):
     4. Subclassing relationships are properly defined
     """
     
-    _types: frozenset[type]
+    _types: TypeSet
     _name: str
-    def __new__(mcs, name:str, bases:tuple[type,...], namespace:dict[str,Any], types:frozenset[type]|None=None,**kwargs:Any) -> IntersectionMeta[IntersectionTs]:
+    def __new__(
+        mcs,
+        name: str,
+        bases: tuple[type, ...],
+        namespace: dict[str, Any],
+        *,
+        types: TypeSet | None = None,
+        **kwargs: Any,
+    ) -> IntersectionMeta[IntersectionTs]:
         """
         Create a new Intersection type class.
         
@@ -67,6 +84,13 @@ class IntersectionMeta[IntersectionTs](type):
             namespace: Class namespace
             types: Frozenset of types this Intersection contains (for parameterized types)
         """
+        # Prevent manual subclassing of specialised Intersection types
+        if types is None and any(isinstance(base, IntersectionMeta) for base in bases):
+            raise TypeError(
+                "Intersection types cannot be subclassed directly; "
+                "use a type alias like `MyIntersection = Intersection[int | str]`."
+            )
+
         cls = super().__new__(mcs, name, bases, namespace, **kwargs)
         
         # Store the types this Intersection contains
@@ -181,7 +205,7 @@ class IntersectionMeta[IntersectionTs](type):
         return repr(cls)
 
 
-class Intersection[IntersectionTs](metaclass=IntersectionMeta[TypeExpr[Any]]):
+class Intersection[IntersectionTs](metaclass=IntersectionMeta[TypeExpr[IntersectionTs]]):
     """
     A Intersection type container that holds exactly one instance of each type in its type set.
     

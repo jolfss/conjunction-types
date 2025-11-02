@@ -5,8 +5,6 @@ and will be visible in IDEs like PyCharm, VSCode with Pylance, etc.
 from intersection_types import Intersection, IntersectionMeta, make_intersection_type
 from typing_extensions import TypeForm as TypeExpr
 
-# Example 1: Type-hinted Intersection type constructor
-IntStrFloat: IntersectionMeta[int | str | float] = Intersection[int | str | float]
 
 # Example 2: Type-hinted Intersection instance
 my_intersection: Intersection[int | str | float] = Intersection(42, "hello", 3.14)
@@ -64,22 +62,13 @@ def get_intersection_type() -> IntersectionMeta[int | str]:
     """
     return Intersection[int | str]
 
-# Example 11: Type-hinted class definition
-class MyIntersection(Intersection[int | str | bool]):
-    """A custom Intersection type with specific methods."""
-    
-    def get_sum(self) -> int:
-        """Get the integer value multiplied by 2."""
-        return self[int] * 2
-    
-    def get_message(self) -> str:
-        """Get the string value."""
-        return self[str]
+# Example 11: Type-hinted type alias instead of subclassing
+MyIntersection = Intersection[int | str | bool]
 
 # Create an instance with proper type hints
-my_instance: MyIntersection = MyIntersection(42, "test", True)
-result: int = my_instance.get_sum()
-message: str = my_instance.get_message()
+my_instance: Intersection[int | str | bool] = MyIntersection(42, "test", True)
+result: int = my_instance[int] * 2
+message: str = my_instance[str]
 
 print("✓ All type hints are properly defined and IDE-inspectable!")
 print(f"  IntStrFloat type: {IntStrFloat}")
