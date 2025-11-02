@@ -5,6 +5,20 @@ A pragmatic compromise for intersection-like semantics in Python with hints.
 [![Python Version](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## Installation
+
+Available on PyPI:
+
+```bash
+# Using pip
+pip install conjunction-types
+
+# Using uv (recommended)
+uv pip install conjunction-types
+```
+
+Requires Python 3.12 or later.
+
 ## Overview
 
 `Conjunction[A | B | C]` represents a container holding exactly one value of each type `A`, `B`, and `C`.
@@ -49,20 +63,6 @@ assert (data1 & data2)[int | float] == Conjunction(1, 3.0)[int | float]
 assert Conjunction[int | str] == Conjunction[str | int]
 assert Conjunction(1, "a") != Conjunction("a", 1)  # values differ
 ```
-
-## Installation
-
-Available on PyPI:
-
-```bash
-# Using pip
-pip install conjunction-types
-
-# Using uv (recommended)
-uv pip install conjunction-types
-```
-
-Requires Python 3.12 or later.
 
 ## Conceptual Foundations
 
