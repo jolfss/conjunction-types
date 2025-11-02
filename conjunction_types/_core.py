@@ -7,7 +7,6 @@ a container holding exactly one value of each type A, B, and C.
 Key Features:
 - Immutable, hashable instances
 - Full type-level and value-level operations
-- Integration with Python's type system via TypeForm/TypeExpr
 - Support for subset checking, iteration, and type extraction
 - Associative composition via & operator
 
@@ -26,7 +25,6 @@ Usage:
 from __future__ import annotations
 
 from typing import Any, Union, get_args, get_origin, Iterator, ClassVar
-from typing_extensions import TypeForm  # PEP 747 support
 from types import GenericAlias, UnionType
 import weakref
 
@@ -98,7 +96,7 @@ class ConjunctionMeta(type):
     - Hashing and equality at the type level
     """
     
-    _cache: ClassVar[weakref.WeakValueDictionary] = weakref.WeakValueDictionary()
+    _cache: ClassVar[weakref.WeakValueDictionary[type,Conjunction]] = weakref.WeakValueDictionary()
     """Cache for created Conjunction types to ensure identity."""
 
     _types: frozenset[type]
@@ -121,7 +119,7 @@ class ConjunctionMeta(type):
         
         return cls
     
-    def __getitem__(cls, item: TypeForm | Any) -> ConjunctionMeta:
+    def __getitem__(cls, item: Any) -> ConjunctionMeta:
         """
         Type constructor: Conjunction[A | B | C]
         
@@ -354,7 +352,7 @@ class Conjunction(metaclass=ConjunctionMeta):
         """Prevent attribute deletion (immutability)."""
         raise TypeError("Conjunction instances are immutable")
     
-    def __getitem__(self, types: TypeForm | tuple[type, ...]) -> Conjunction:
+    def __getitem__(self, types: tuple[type, ...]) -> Conjunction:
         """
         Extract a subset of types, returning a new Conjunction.
         
@@ -391,7 +389,7 @@ class Conjunction(metaclass=ConjunctionMeta):
         object.__setattr__(result, '_hash', None)
         return result
     
-    def __contains__(self, item: type | TypeForm) -> bool:
+    def __contains__(self, item: type) -> bool:
         """
         Check if a type is present in this instance.
         
@@ -486,7 +484,7 @@ class Conjunction(metaclass=ConjunctionMeta):
         """
         return Conjunction.__and__(self, other)
     
-    def __truediv__(self, types: type | TypeForm) -> Conjunction:
+    def __truediv__(self, types: type) -> Conjunction:
         """
         Set difference - return a new Conjunction without a type.
         

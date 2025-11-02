@@ -4,7 +4,6 @@ Comprehensive Test Suite for Conjunction Type System
 This validates all the planned functionality from the specification.
 """
 from conjunction_types import Conjunction
-from typing import Any
 
 type FloatIntStr = Conjunction[float | int | str]
 

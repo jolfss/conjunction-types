@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from types import UnionType
 from typing import Any, overload, Iterator
-from typing_extensions import TypeForm
 
 type ConjOrT[T] = Conjunction[T] | T
 type ConjOrType[T] = Conjunction[T] | type[T]
@@ -113,7 +112,7 @@ class Conjunction[ItemTs](metaclass=ConjunctionMeta):
 
 
     @classmethod
-    def __class_getitem__[OtherItemTs](cls, item: TypeForm[OtherItemTs] | OtherItemTs) -> ConjunctionMeta[OtherItemTs]: ...
+    def __class_getitem__[OtherItemTs](cls, item: OtherItemTs) -> ConjunctionMeta[OtherItemTs]: ...
     
     #
     # NOTE: For the __class_getitem__, the `OtherItemTs` is not evaluated to a runtime UnionType object, and so the above type hints
@@ -123,9 +122,9 @@ class Conjunction[ItemTs](metaclass=ConjunctionMeta):
     # Ideally, TypeForm (or perhaps TypeForm by the time of Python 3.15+) will be able to capture such annotations before they can
     # be evaluated to an opqque UnionType. If this is specified, it's probably in PEP 747.
     #
-    def __getitem__[OtherItemTs](self, types: TypeForm[OtherItemTs] | OtherItemTs) -> Conjunction[OtherItemTs]: ...
+    def __getitem__[OtherItemTs](self, types: OtherItemTs) -> Conjunction[OtherItemTs]: ...
     
-    def __contains__(self, item: type[ItemTs] | TypeForm[ItemTs]) -> bool: ...
+    def __contains__(self, item: type[ItemTs]) -> bool: ...
 
     def __iter__(self) -> Iterator[type[ItemTs]]: ... 
 
@@ -141,7 +140,7 @@ class Conjunction[ItemTs](metaclass=ConjunctionMeta):
     
     def __rand__[OtherItemT](self, other: OtherItemT) -> Conjunction[ItemTs | OtherItemT]: ...
     
-    def __truediv__(self, types: type | TypeForm[Any]) -> Conjunction[Any]: ...
+    def __truediv__(self, types: type) -> Conjunction[Any]: ...
     
     def __eq__(self, other: Any) -> bool: ...
 

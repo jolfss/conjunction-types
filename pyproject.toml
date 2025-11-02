@@ -5,12 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "conjunction-types"
 version = "0.1.0"
-description = "Conjunction: Product/Intersection types for Python with almost full type hint support"
+description = "Conjunction: A useful intersection/product type for Python."
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 license = {text = "MIT"}
 authors = [
-    {name = "Product Types Contributors"}
+    {name = "Sean Brynjólfsson"}
 ]
 keywords = [
     "types",
@@ -23,43 +23,35 @@ keywords = [
     "pep747"
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
-dependencies = [
-    "typing-extensions>=4.12.0",
-]
+dependencies = []
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
-    "mypy>=1.11.0",
     "pyright>=1.1.380",
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/product-types"
-Documentation = "https://github.com/yourusername/product-types/blob/main/docs/README.md"
-Repository = "https://github.com/yourusername/product-types"
-Issues = "https://github.com/yourusername/product-types/issues"
+Homepage = "https://github.com/jolfss/conjunction-types"
+Documentation = "https://github.com/jolfss/conjunction-types/blob/main/README.md"
+Repository = "https://github.com/jolfss/conjunction-types"
+Issues = "https://github.com/jolfss/conjunction-types/issues"
 
 [tool.setuptools]
 packages = ["conjunction_types"]
 
 [tool.setuptools.package-data]
 product_types = ["py.typed"]
-
-[tool.mypy]
-python_version = "3.14"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-strict = true
 
 [tool.pyright]
 pythonVersion = "3.14"
