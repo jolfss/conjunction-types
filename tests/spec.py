@@ -5,10 +5,7 @@ This script runs through every example from the planned functionality
 to verify the implementation matches the specification exactly.
 """
 
-import sys
-sys.path.insert(0, '/mnt/user-data/outputs')
-
-from product_types import Intersection
+from conjunction_types import Conjunction
 
 
 print("=" * 70)
@@ -20,30 +17,30 @@ print("=" * 70)
 # ============================================================================
 print("\n1. Testing subset subclassing...")
 
-float_int_str = Intersection[float | int | str]
-subset = Intersection[float | str]
+float_int_str = Conjunction[float | int | str]
+subset = Conjunction[float | str]
 
 assert subset in float_int_str, "✗ Subset check failed"
-print("   ✓ Intersection[float|str] in Intersection[float|int|str]")
+print("   ✓ Conjunction[float|str] in Conjunction[float|int|str]")
 
-assert not (Intersection[float | str | bool] in float_int_str), "✗ Non-subset check failed"
-print("   ✓ Intersection[float|str|bool] not in Intersection[float|int|str]")
+assert not (Conjunction[float | str | bool] in float_int_str), "✗ Non-subset check failed"
+print("   ✓ Conjunction[float|str|bool] not in Conjunction[float|int|str]")
 
 # ============================================================================
 # TYPE EQUIVALENCE
 # ============================================================================
 print("\n2. Testing type equivalence...")
 
-assert Intersection[float | str] == Intersection[str | float], "✗ Permutation invariance failed"
+assert Conjunction[float | str] == Conjunction[str | float], "✗ Permutation invariance failed"
 print("   ✓ Permutation invariance")
 
-assert (Intersection[float] & Intersection[str]) == Intersection[str | float], "✗ & operator failed"
-print("   ✓ Intersection operator")
+assert (Conjunction[float] & Conjunction[str]) == Conjunction[str | float], "✗ & operator failed"
+print("   ✓ Conjunction operator")
 
-assert Intersection[Intersection[float] & str] == Intersection[float | str], "✗ Flattening failed"
-print("   ✓ Intersection flattening")
+assert Conjunction[Conjunction[float] & str] == Conjunction[float | str], "✗ Flattening failed"
+print("   ✓ Conjunction flattening")
 
-assert Intersection[float | Intersection[str]] == Intersection[float | str], "✗ Distribution failed"
+assert Conjunction[float | Conjunction[str]] == Conjunction[float | str], "✗ Distribution failed"
 print("   ✓ Intersect distributes over sum")
 
 # ============================================================================
@@ -51,13 +48,13 @@ print("   ✓ Intersect distributes over sum")
 # ============================================================================
 print("\n3. Testing type construction...")
 
-# The specification shows Intersection[str|...] but ... can't be used with |
+# The specification shows Conjunction[str|...] but ... can't be used with |
 # Instead, test the actual getitem behavior
-str_type = Intersection[str]
-assert str in str_type, "✗ str not in Intersection[str]"
+str_type = Conjunction[str]
+assert str in str_type, "✗ str not in Conjunction[str]"
 print("   ✓ Basic type construction")
 
-str_int_type = Intersection[str | int]
+str_int_type = Conjunction[str | int]
 assert str in str_int_type and int in str_int_type, "✗ Multi-type construction failed"
 print("   ✓ Multi-type construction")
 
@@ -66,7 +63,7 @@ print("   ✓ Multi-type construction")
 # ============================================================================
 print("\n4. Testing type concatenation...")
 
-float_int_str_bool = Intersection(Intersection(5) & "a string") & Intersection(True, 0.3)
+float_int_str_bool = Conjunction(Conjunction(5) & "a string") & Conjunction(True, 0.3)
 assert int in float_int_str_bool, "✗ int not found"
 assert str in float_int_str_bool, "✗ str not found"
 assert bool in float_int_str_bool, "✗ bool not found"
@@ -78,7 +75,7 @@ print("   ✓ Type concatenation works")
 # ============================================================================
 print("\n5. Testing derived types...")
 
-FloatIntStrBool = Intersection[str | int | bool | float]
+FloatIntStrBool = Conjunction[str | int | bool | float]
 
 assert float in FloatIntStrBool, "✗ float not in type"
 print("   ✓ float in FloatIntStrBool")
@@ -86,11 +83,11 @@ print("   ✓ float in FloatIntStrBool")
 assert not (dict in FloatIntStrBool), "✗ dict should not be in type"
 print("   ✓ dict not in FloatIntStrBool")
 
-assert Intersection[float | str] in FloatIntStrBool, "✗ Subset not in superset"
-print("   ✓ Intersection[float|str] in FloatIntStrBool")
+assert Conjunction[float | str] in FloatIntStrBool, "✗ Subset not in superset"
+print("   ✓ Conjunction[float|str] in FloatIntStrBool")
 
-assert not (Intersection[float | str | dict] in FloatIntStrBool), "✗ Non-subset in superset"
-print("   ✓ Intersection[float|str|dict] not in FloatIntStrBool")
+assert not (Conjunction[float | str | dict] in FloatIntStrBool), "✗ Non-subset in superset"
+print("   ✓ Conjunction[float|str|dict] not in FloatIntStrBool")
 
 # Iteration
 types_found = set()
@@ -104,7 +101,7 @@ print("   ✓ Iteration over types")
 # ============================================================================
 print("\n6. Testing instance construction...")
 
-float_int_str = Intersection(5, "int", 0.5)
+float_int_str = Conjunction(5, "int", 0.5)
 assert int in float_int_str, "✗ int not inferred"
 assert str in float_int_str, "✗ str not inferred"
 assert float in float_int_str, "✗ float not inferred"
@@ -120,7 +117,9 @@ assert _float == 0.5, "✗ Float extraction failed"
 assert isinstance(_float, float), "✗ Not plain float"
 print("   ✓ Single type extraction")
 
-_float, _int, _str = float_int_str.to(float, int, str)
+_float = float_int_str.to(float)
+_int = float_int_str.to(int)
+_str = float_int_str.to(str)
 assert _float == 0.5 and _int == 5 and _str == "int", "✗ Multi-type extraction failed"
 print("   ✓ Multi-type extraction")
 
@@ -154,7 +153,7 @@ print("   ✓ Iteration over keys")
 # Values
 values_found = []
 for _value in float_int_str.values():
-    assert isinstance(_value, Intersection), "✗ Value not wrapped"
+    assert isinstance(_value, Conjunction), "✗ Value not wrapped"
     values_found.append(_value)
 assert len(values_found) == 3, "✗ Wrong number of values"
 print("   ✓ Iteration over values")
@@ -162,7 +161,7 @@ print("   ✓ Iteration over values")
 # Items
 items_found = []
 for _type, _value in float_int_str.items():
-    assert isinstance(_value, Intersection), "✗ Item value not wrapped"
+    assert isinstance(_value, Conjunction), "✗ Item value not wrapped"
     items_found.append((_type, _value))
 assert len(items_found) == 3, "✗ Wrong number of items"
 print("   ✓ Iteration over items")
@@ -173,23 +172,23 @@ print("   ✓ Iteration over items")
 print("\n10. Testing partial extraction...")
 
 float_int = float_int_str[float | int]
-assert isinstance(float_int, Intersection), "✗ Not Intersection"
+assert isinstance(float_int, Conjunction), "✗ Not Conjunction"
 assert float in float_int and int in float_int, "✗ Types missing"
 assert not (str in float_int), "✗ Extra type present"
-print("   ✓ Partial extraction returns Intersection")
+print("   ✓ Partial extraction returns Conjunction")
 
 # ============================================================================
 # INTERSECTION OPERATOR
 # ============================================================================
-print("\n11. Testing intersection operator...")
+print("\n11. Testing conjunction operator...")
 
-bool_float = Intersection(False, 1.0)
-bool_int = Intersection(True, 42)
+bool_float = Conjunction(False, 1.0)
+bool_int = Conjunction(True, 42)
 
 # Associativity
 float_int_bool = (float_int & bool_int) & bool_float
 assert float_int_bool == float_int & (bool_int & bool_float), "✗ Not associative"
-assert float_int_bool == Intersection(float_int, bool_int, bool_float), "✗ Constructor not equivalent"
+assert float_int_bool == Conjunction(float_int, bool_int, bool_float), "✗ Constructor not equivalent"
 print("   ✓ Associativity")
 
 # Right-precedence
@@ -202,7 +201,7 @@ print("   ✓ Right-precedence (non-commutativity)")
 # ============================================================================
 print("\n12. Testing set difference...")
 
-float_int_bool = Intersection(5, 0.5, True)
+float_int_bool = Conjunction(5, 0.5, True)
 float_int = float_int_bool / bool
 assert float in float_int and int in float_int, "✗ Types missing"
 assert not (bool in float_int), "✗ bool not removed"

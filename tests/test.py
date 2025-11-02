@@ -1,35 +1,35 @@
 """
-Comprehensive Test Suite for Intersection Type System
+Comprehensive Test Suite for Conjunction Type System
 
 This validates all the planned functionality from the specification.
 """
-from product_types import Intersection
+from conjunction_types import Conjunction
 from typing import Any
 
-type FloatIntStr = Intersection[float | int | str]
+type FloatIntStr = Conjunction[float | int | str]
 
 def test_type_subset_checking():
     """Test isinstance-style subset checking on types."""
     print("Testing type subset checking...")
     
     # Create types
-    float_int_str = Intersection[float | int | str]
+    float_int_str = Conjunction[float | int | str]
     float_int_str_dictstrstr = float_int_str & dict[str,str]
 
-    float_str = Intersection[float | str]
+    float_str = Conjunction[float | str]
     
     # Subset checking
-    assert float_str in float_int_str, "Intersection[float|str] should be in Intersection[float|int|str]"
-    assert not (Intersection[float | int | str | bool] in float_int_str), "Superset should not be in subset"
+    assert float_str in float_int_str, "Conjunction[float|str] should be in Conjunction[float|int|str]"
+    assert not (Conjunction[float | int | str | bool] in float_int_str), "Superset should not be in subset"
     
     # Single type checking
-    assert float in float_int_str, "float should be in Intersection[float|int|str]"
-    assert int in float_int_str, "int should be in Intersection[float|int|str]"
-    assert dict not in float_int_str, "dict should not be in Intersection[float|int|str]"
-    assert dict[str,str] in float_int_str_dictstrstr, "specialized dict[str,str] should be in Intersection"
-    assert dict[str,int] not in float_int_str_dictstrstr, "this parametrization of dict is not in Intersection"
-    assert int | str in float_int_str, "unions are treated as intersections inside intersections"
-    assert float_int_str | list not in float_int_str_dictstrstr, "intersection classes act as their syntactic union counterpart"
+    assert float in float_int_str, "float should be in Conjunction[float|int|str]"
+    assert int in float_int_str, "int should be in Conjunction[float|int|str]"
+    assert dict not in float_int_str, "dict should not be in Conjunction[float|int|str]"
+    assert dict[str,str] in float_int_str_dictstrstr, "specialized dict[str,str] should be in Conjunction"
+    assert dict[str,int] not in float_int_str_dictstrstr, "this parametrization of dict is not in Conjunction"
+    assert int | str in float_int_str, "unions are treated as conjunctions inside conjunctions"
+    assert float_int_str | list not in float_int_str_dictstrstr, "conjunction classes act as their syntactic union counterpart"
     assert float_int_str & list not in float_int_str_dictstrstr, "same behavior for & operator"
     assert dict[str,str] & float_int_str in float_int_str_dictstrstr, "rand"
 
@@ -42,20 +42,20 @@ def test_type_equivalence():
     print("\nTesting type equivalence...")
     
     # Permutation invariance
-    assert Intersection[float | str] == Intersection[str | float], "Should be permutation invariant"
+    assert Conjunction[float | str] == Conjunction[str | float], "Should be permutation invariant"
     
-    # Intersection operator
-    assert (Intersection[float] & Intersection[str]) == Intersection[str | float], "& should combine types"
+    # Conjunction operator
+    assert (Conjunction[float] & Conjunction[str]) == Conjunction[str | float], "& should combine types"
     
-    # Intersection flattening
-    assert Intersection[Intersection[float] & str] == Intersection[float | str], "Should flatten nested Intersections"
+    # Conjunction flattening
+    assert Conjunction[Conjunction[float] & str] == Conjunction[float | str], "Should flatten nested Conjunctions"
     
-    # Union treated as intersection inside Intersection
-    assert Intersection[float | Intersection[str]] == Intersection[float | str], "Should distribute over union"
+    # Union treated as conjunction inside Conjunction
+    assert Conjunction[float | Conjunction[str]] == Conjunction[float | str], "Should distribute over union"
 
-    assert Intersection[dict[str,str]] != Intersection[dict[str, int]], "Diff. parametrizations should not be equal"
-    assert Intersection[dict[str,dict[str,int]]] == Intersection[dict[str,dict[str,int]]], "Same parametrizations should be equal"
-    assert Intersection[Intersection[int | Intersection[dict[str,int]]] & bool] == Intersection[int | dict[str,int] | bool], "Flatten equivalence"
+    assert Conjunction[dict[str,str]] != Conjunction[dict[str, int]], "Diff. parametrizations should not be equal"
+    assert Conjunction[dict[str,dict[str,int]]] == Conjunction[dict[str,dict[str,int]]], "Same parametrizations should be equal"
+    assert Conjunction[Conjunction[int | Conjunction[dict[str,int]]] & bool] == Conjunction[int | dict[str,int] | bool], "Flatten equivalence"
     
     print("✓ Type equivalence works")
 
@@ -65,17 +65,17 @@ def test_type_construction():
     print("\nTesting type construction...")
     
     # Basic construction
-    str_type = Intersection[str]
-    assert str in str_type, "str should be in Intersection[str]"
+    str_type = Conjunction[str]
+    assert str in str_type, "str should be in Conjunction[str]"
     
     # Multi-type construction
-    str_int = Intersection[str | int]
+    str_int = Conjunction[str | int]
     assert str in str_int and int in str_int, "Both types should be present"
     
     # Error on invalid subset
     try:
         # This should fail at instance creation time, not type creation
-        str_int_instance = Intersection[str | int]("hello", 5)
+        str_int_instance = Conjunction[str | int]("hello", 5)
         str_int_instance[bool]
         # Trying to extract bool from str|int should fail
         print("  Note: Type-level validation happens at runtime during extraction")
@@ -90,10 +90,10 @@ def test_type_concatenation():
     print("\nTesting type concatenation...")
     
     # Create instance through concatenation
-    q = Intersection("cactus", Intersection("string"), Intersection(True))
-    x = Intersection(5) & "Any"
-    y = Intersection(Intersection(Intersection(5) & Intersection(15) & 2.0 )) 
-    float_int_str_bool = Intersection(Intersection(5) & "a string") & Intersection(True, 0.3)
+    q = Conjunction("cactus", Conjunction("string"), Conjunction(True))
+    x = Conjunction(5) & "Any"
+    y = Conjunction(Conjunction(Conjunction(5) & Conjunction(15) & 2.0 )) 
+    float_int_str_bool = Conjunction(Conjunction(5) & "a string") & Conjunction(True, 0.3)
     
     # Check types present
     assert int in float_int_str_bool, "int should be present"
@@ -109,15 +109,15 @@ def test_derived_types():
     print("\nTesting derived types...")
     
     # Type alias
-    FloatIntStrBool = Intersection[str | int | bool | float]
+    FloatIntStrBool = Conjunction[str | int | bool | float]
     
     # Type checking
     assert float in FloatIntStrBool, "float should be in FloatIntStrBool"
     assert not (dict in FloatIntStrBool), "dict should not be in FloatIntStrBool"
     
     # Subset checking
-    assert Intersection[float | str] in FloatIntStrBool, "Subset should be contained"
-    assert not (Intersection[float | str | dict] in FloatIntStrBool), "Superset should not be contained"
+    assert Conjunction[float | str] in FloatIntStrBool, "Subset should be contained"
+    assert not (Conjunction[float | str | dict] in FloatIntStrBool), "Superset should not be contained"
     
     # Iteration over types
     types_found = set()
@@ -134,7 +134,7 @@ def test_instance_construction():
     print("\nTesting instance construction...")
     
     # Type inference
-    float_int_str = Intersection(5, "int", 0.5)
+    float_int_str = Conjunction(5, "int", 0.5)
     
     assert int in float_int_str, "Should infer int from 5"
     assert str in float_int_str, "Should infer str from 'int'"
@@ -147,12 +147,12 @@ def test_type_extraction():
     """Test extracting values from instances."""
     print("\nTesting type extraction...")
     
-    float_int_str = Intersection(5, "hello", 0.5)
+    float_int_str = Conjunction(5, "hello", 0.5)
     
     # Single type extraction
     float_val = float_int_str.to(float)
     assert float_val == 0.5, f"Expected 0.5, got {float_val}"
-    assert isinstance(float_val, float), "Should be plain float, not Intersection"
+    assert isinstance(float_val, float), "Should be plain float, not Conjunction"
     
     # Multi-type extraction (rolled back .to(*args); wasn't creative enough to figure out *type[T] -> *T outside of manual overloads)
     int_val, float_val, str_val = tuple(float_int_str.to(_T) for _T in [int, float, str])
@@ -164,16 +164,16 @@ def test_type_extraction():
 
 
 def test_partial_extraction():
-    """Test partial type extraction returning Intersection."""
+    """Test partial type extraction returning Conjunction."""
     print("\nTesting partial extraction...")
     
-    float_int_str = Intersection(5, "hello", 0.5)
+    float_int_str = Conjunction(5, "hello", 0.5)
     
-    # Extract subset - should return Intersection
-    float_int : Intersection[float|int] = float_int_str[float | int]  # type: ignore
+    # Extract subset - should return Conjunction
+    float_int : Conjunction[float|int] = float_int_str[float | int]  # type: ignore
     # NOTE: At runtime this will work, but static checker doesn't like this
     
-    assert isinstance(float_int, Intersection), "Should return Intersection"
+    assert isinstance(float_int, Conjunction), "Should return Conjunction"
     assert float in float_int, "Should contain float"
     assert int in float_int, "Should contain int"
     assert not (str in float_int), "Should not contain str"
@@ -185,18 +185,18 @@ def test_partial_extraction():
     print("✓ Partial extraction works")
 
 
-def test_intersection_operator():
+def test_conjunction_operator():
     """Test the & operator for associativity and non-commutativity."""
-    print("\nTesting intersection operator...")
+    print("\nTesting conjunction operator...")
     
-    float_int = Intersection(5, 0.5)
-    bool_int = Intersection(True, 42)
-    bool_float = Intersection(False, 1.0)
+    float_int = Conjunction(5, 0.5)
+    bool_int = Conjunction(True, 42)
+    bool_float = Conjunction(False, 1.0)
     
     # Test associativity
     result1 = (float_int & bool_int) & bool_float
     result2 = float_int & (bool_int & bool_float)
-    result3 = Intersection(float_int, bool_int, bool_float)
+    result3 = Conjunction(float_int, bool_int, bool_float)
     
     # All should have the same types
     assert set(result1._data.keys()) == set(result2._data.keys()) == set(result3._data.keys())
@@ -208,14 +208,14 @@ def test_intersection_operator():
     assert result1.to(float) == 1.0, "Right-most float should win"
     assert result1.to(int) == 42, "Middle int should be preserved"
     
-    print("✓ Intersection operator works")
+    print("✓ Conjunction operator works")
 
 
 def test_instance_type_checking():
     """Test type membership on instances."""
     print("\nTesting instance type checking...")
     
-    float_int_str = Intersection(5, "hello", 0.5)
+    float_int_str = Conjunction(5, "hello", 0.5)
     
     # Single type
     assert float in float_int_str, "float should be in instance"
@@ -233,7 +233,7 @@ def test_iteration():
     """Test iteration over types and values."""
     print("\nTesting iteration...")
     
-    float_int_str = Intersection(5, "hello", 0.5)
+    float_int_str = Conjunction(5, "hello", 0.5)
     
     # Iterate over types (keys)
     types_found = set()
@@ -245,7 +245,7 @@ def test_iteration():
     # Iterate over values
     values_found = []
     for value in float_int_str.values():
-        assert isinstance(value, Intersection), "Values should be wrapped in Intersection"
+        assert isinstance(value, Conjunction), "Values should be wrapped in Conjunction"
         values_found.append(value)
     
     assert len(values_found) == 3, "Should have 3 values"
@@ -253,7 +253,7 @@ def test_iteration():
     # Iterate over items
     items_found = []
     for typ, value in float_int_str.items():
-        assert isinstance(value, Intersection), "Values should be wrapped in Intersection"
+        assert isinstance(value, Conjunction), "Values should be wrapped in Conjunction"
         items_found.append((typ, value))
     
     assert len(items_found) == 3, "Should have 3 items"
@@ -265,9 +265,9 @@ def test_hashability():
     """Test that instances are hashable."""
     print("\nTesting hashability...")
     
-    obj1 = Intersection(5, "hello", 0.5)
-    obj2 = Intersection(5, "hello", 0.5)
-    obj3 = Intersection(5, "world", 0.5)
+    obj1 = Conjunction(5, "hello", 0.5)
+    obj2 = Conjunction(5, "hello", 0.5)
+    obj3 = Conjunction(5, "world", 0.5)
     
     # Should be hashable
     hash1 = hash(obj1)
@@ -292,7 +292,7 @@ def test_immutability():
     """Test that instances are immutable."""
     print("\nTesting immutability...")
     
-    obj = Intersection(5, "hello", 0.5)
+    obj = Conjunction(5, "hello", 0.5)
     
     # Cannot modify attributes
     try:
@@ -322,7 +322,7 @@ def test_bonus_set_difference():
     """Test the bonus set difference operation."""
     print("\nTesting bonus set difference...")
     
-    float_int_bool = Intersection(5, True, 0.5)
+    float_int_bool = Conjunction(5, True, 0.5)
     
     # Remove bool type
     float_int = float_int_bool / bool
@@ -344,7 +344,7 @@ def test_type_errors():
     """Test that appropriate errors are raised."""
     print("\nTesting error conditions...")
     
-    obj = Intersection(5, "hello", 0.5)
+    obj = Conjunction(5, "hello", 0.5)
     
     # Extract missing type
     try:
@@ -360,10 +360,10 @@ def test_type_errors():
     except KeyError:
         pass
     
-    # Combine with non-Intersection - this should work now (wraps the value)
-    result = obj & "not an intersection"
-    assert str in result, "Should wrap string and add to intersection"
-    assert result.to(str) == "not an intersection", "Should have correct string value"
+    # Combine with non-Conjunction - this should work now (wraps the value)
+    result = obj & "not an conjunction"
+    assert str in result, "Should wrap string and add to conjunction"
+    assert result.to(str) == "not an conjunction", "Should have correct string value"
     
     print("✓ Error conditions handled correctly")
 
@@ -372,41 +372,41 @@ def test_edge_cases():
     """Test edge cases and corner scenarios."""
     print("\nTesting edge cases...")
     
-    # Empty intersection
-    empty = Intersection()
-    assert len(empty) == 0, "Empty intersection should have length 0"
+    # Empty conjunction
+    empty = Conjunction()
+    assert len(empty) == 0, "Empty conjunction should have length 0"
     assert list(empty) == [], "Should iterate to empty list"
     
     # Single type
-    single = Intersection(42)
+    single = Conjunction(42)
     assert len(single) == 1, "Should have one type"
     assert int in single, "Should contain int"
     
     # Type override (right precedence)
-    obj = Intersection(5, 10, 15)  # All int, last one wins
+    obj = Conjunction(5, 10, 15)  # All int, last one wins
     assert obj.to(int) == 15, "Last value should win"
     
-    # Nested intersection merging
-    inner = Intersection(5, "hello")
-    outer = Intersection(inner, 0.5)
-    assert int in outer and str in outer and float in outer, "Should merge nested intersection"
+    # Nested conjunction merging
+    inner = Conjunction(5, "hello")
+    outer = Conjunction(inner, 0.5)
+    assert int in outer and str in outer and float in outer, "Should merge nested conjunction"
     
     print("✓ Edge cases handled correctly")
 
 
 def test_isinstance_and_issubclass():
-    """Test isinstance and issubclass with Intersection types."""
+    """Test isinstance and issubclass with Conjunction types."""
     print("\nTesting isinstance and issubclass...")
     
     # Create types
-    FloatInt = Intersection[float | int]
-    FloatIntStr = Intersection[float | int | str]
+    FloatInt = Conjunction[float | int]
+    FloatIntStr = Conjunction[float | int | str]
     
     # Create instance
-    obj = Intersection(5, 0.5)
+    obj = Conjunction(5, 0.5)
     
     # isinstance checking
-    assert isinstance(obj, Intersection), "Should be instance of Intersection"
+    assert isinstance(obj, Conjunction), "Should be instance of Conjunction"
     # Note: isinstance with specific type requires exact match
     # This is a limitation of Python's type system
     
@@ -420,7 +420,7 @@ def test_isinstance_and_issubclass():
 def run_all_tests():
     """Run all test functions."""
     print("=" * 60)
-    print("Running Intersection Type System Test Suite")
+    print("Running Conjunction Type System Test Suite")
     print("=" * 60)
     
     test_type_subset_checking()
@@ -431,7 +431,7 @@ def run_all_tests():
     test_instance_construction()
     test_type_extraction()
     test_partial_extraction()
-    test_intersection_operator()
+    test_conjunction_operator()
     test_instance_type_checking()
     test_iteration()
     test_hashability()

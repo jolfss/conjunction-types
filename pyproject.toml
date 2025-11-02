@@ -3,9 +3,9 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "product-types"
+name = "conjunction-types"
 version = "0.1.0"
-description = "Product/Intersection types for Python with full type hint support"
+description = "Conjunction: Product/Intersection types for Python with almost full type hint support"
 readme = "README.md"
 requires-python = ">=3.14"
 license = {text = "MIT"}
@@ -49,7 +49,7 @@ Repository = "https://github.com/yourusername/product-types"
 Issues = "https://github.com/yourusername/product-types/issues"
 
 [tool.setuptools]
-packages = ["product_types"]
+packages = ["conjunction_types"]
 
 [tool.setuptools.package-data]
 product_types = ["py.typed"]
