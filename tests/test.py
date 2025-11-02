@@ -5,6 +5,7 @@ This validates all the planned functionality from the specification.
 """
 
 import sys
+from typing_extensions import TypeForm
 from product_types import Intersection
 
 type FloatIntStr = Intersection[float | int | str]
@@ -77,6 +78,7 @@ def test_type_concatenation():
     print("\nTesting type concatenation...")
     
     # Create instance through concatenation
+    q = Intersection("cactus", Intersection("string"), Intersection(True))
     x = Intersection(5) & "Any"
     y = Intersection(Intersection(Intersection(5) & Intersection(15) & 2.0 )) 
     float_int_str_bool = Intersection(Intersection(5) & "a string") & Intersection(True, 0.3)
@@ -140,8 +142,8 @@ def test_type_extraction():
     assert float_val == 0.5, f"Expected 0.5, got {float_val}"
     assert isinstance(float_val, float), "Should be plain float, not Intersection"
     
-    # Multi-type extraction
-    float_val, int_val, str_val = float_int_str.to(float, int, str)
+    # Multi-type extraction (rolled back .to(*args); wasn't creative enough to figure out *type[T] -> *T outside of manual overloads)
+    int_val, float_val, str_val = tuple(float_int_str.to(_T) for _T in [int, float, str])
     assert float_val == 0.5, f"Expected 0.5, got {float_val}"
     assert int_val == 5, f"Expected 5, got {int_val}"
     assert str_val == "hello", f"Expected 'hello', got {str_val}"

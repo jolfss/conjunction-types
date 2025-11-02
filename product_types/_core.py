@@ -361,7 +361,7 @@ class Intersection(metaclass=IntersectionMeta):
         """Prevent attribute deletion (immutability)."""
         raise TypeError("Intersection instances are immutable")
     
-    def __getitem__(self, types: type | TypeForm | tuple[type, ...]) -> Intersection:
+    def __getitem__(self, types: TypeForm | tuple[type, ...]) -> Intersection:
         """
         Extract a subset of types, returning a new Intersection.
         
@@ -441,13 +441,8 @@ class Intersection(metaclass=IntersectionMeta):
             object.__setattr__(wrapped, '_hash', None)
             yield (typ, wrapped)
     
-    @overload
-    def to(self, typ: type[T]) -> T: ...
     
-    @overload
-    def to(self, *types: type) -> tuple[Any, ...]: ...
-    
-    def to(self, *types: type) -> Any:
+    def to(self, typ: type) -> Any:
         """
         Extract raw values by type.
         
@@ -464,18 +459,10 @@ class Intersection(metaclass=IntersectionMeta):
             obj.to(float) -> 3.14
             obj.to(float, int, str) -> (3.14, 5, "hello")
         """
-        if len(types) == 1:
-            typ = types[0]
-            if typ not in self._data:
-                raise KeyError(f"Type {typ} not in Intersection")
-            return self._data[typ]
-        
-        result = []
-        for typ in types:
-            if typ not in self._data:
-                raise KeyError(f"Type {typ} not in Intersection")
-            result.append(self._data[typ])
-        return tuple(result)
+        if typ not in self._data:
+            raise KeyError(f"Type {typ} not in Intersection")
+        return self._data[typ]
+    
     
     def __and__(self, other: Any) -> Intersection:
         """

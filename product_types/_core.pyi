@@ -29,8 +29,8 @@ from __future__ import annotations
 
 import sys
 from typing import (
-    Any, TypeVar, Generic, Union, get_args, get_origin,
-    overload, Protocol, runtime_checkable, Iterator, ClassVar
+    Any, TypeVar, Generic, TypeVarTuple, Union, get_args, get_origin,
+    overload, Protocol, runtime_checkable, Iterator, ClassVar, Unpack
 )
 from typing_extensions import TypeForm  # PEP 747 support
 from collections.abc import Iterable
@@ -78,8 +78,9 @@ class IntersectionMeta[ItemTs](type):
     
     # Cache for created Intersection types to ensure identity
     _cache: ClassVar[weakref.WeakValueDictionary]
+
     @overload
-    def __new__[T1](mcs, name:str, v1: Intersection[T1], **kwargs) -> Intersection[T1]: ...
+    def __new__[NewItemTs](mcs, name:str, v1: Intersection[NewItemTs], **kwargs) -> Intersection[NewItemTs]: ...
 
     @overload
     def __new__(
@@ -175,6 +176,8 @@ class IntersectionMeta[ItemTs](type):
 # ============================================================================
 # Intersection Class - Handles Value-Level Operations
 # ============================================================================
+type _IorT[T] = Intersection[T] | T
+type _IorTy[T] = Intersection[T] | type[T]
 class Intersection[ItemTs](metaclass=IntersectionMeta):
     """
     Immutable container holding exactly one value for each component type.
@@ -189,7 +192,52 @@ class Intersection[ItemTs](metaclass=IntersectionMeta):
     
     __slots__ = ('_data', '_hash')
 
-    def __new__[Ts](cls, *vs : Intersection[Ts] | Ts) -> Intersection[Ts]: ...
+    #
+    # NOTE: We enumerate these constructors since it's not possible to homogenize/flatten out any contained Intersection[...] within the args.
+    # Ideally, we would be able to write something akin to...
+    #   def __new__[*Ts](cls, *vs : Unpack[tuple[*IntersectionOrType[Ts]]) -> Intersection[Union[*Ts]]
+    #  
+    @overload
+    def __new__[T1](cls, v1: _IorT[T1]) -> Intersection[T1]: ...
+    @overload
+    def __new__[T1, T2](cls, v1: _IorT[T1],v2: _IorT[T2],) -> Intersection[T1 | T2]: ...
+    @overload
+    def __new__[T1, T2, T3](cls, v1: _IorT[T1],v2: _IorT[T2],v3: _IorT[T3],) -> Intersection[T1 | T2 | T3]: ...
+    @overload
+    def __new__[T1, T2, T3, T4](cls, v1: _IorT[T1],v2: _IorT[T2],v3: _IorT[T3],v4: _IorT[T4],) -> Intersection[T1 | T2 | T3 | T4]: ...
+    @overload
+    def __new__[T1, T2, T3, T4, T5](cls, v1: _IorT[T1],v2: _IorT[T2],v3: _IorT[T3],v4: _IorT[T4],v5: _IorT[T5],) -> Intersection[T1 | T2 | T3 | T4 | T5]: ...
+    @overload
+    def __new__[T1, T2, T3, T4, T5, T6](cls, v1: _IorT[T1],v2: _IorT[T2],v3: _IorT[T3],v4: _IorT[T4],v5: _IorT[T5],v6: _IorT[T6],) -> Intersection[T1 | T2 | T3 | T4 | T5 | T6]: ...
+    @overload
+    def __new__[T1, T2, T3, T4, T5, T6, T7](cls, v1: _IorT[T1],v2: _IorT[T2],v3: _IorT[T3],v4: _IorT[T4],v5: _IorT[T5],v6: _IorT[T6],v7: _IorT[T7],) -> Intersection[T1 | T2 | T3 | T4 | T5 | T6 | T7]: ...
+    @overload
+    def __new__[T1, T2, T3, T4, T5, T6, T7, T8](cls, v1: _IorT[T1],v2: _IorT[T2],v3: _IorT[T3],v4: _IorT[T4],v5: _IorT[T5],v6: _IorT[T6],v7: _IorT[T7],v8: _IorT[T8],) -> Intersection[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8]: ...
+    @overload
+    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9](cls, v1: _IorT[T1],v2: _IorT[T2],v3: _IorT[T3],v4: _IorT[T4],v5: _IorT[T5],v6: _IorT[T6],v7: _IorT[T7],v8: _IorT[T8],v9: _IorT[T9],) -> Intersection[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9]: ...
+    @overload
+    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](cls, v1: _IorT[T1],v2: _IorT[T2],v3: _IorT[T3],v4: _IorT[T4],v5: _IorT[T5],v6: _IorT[T6],v7: _IorT[T7],v8: _IorT[T8],v9: _IorT[T9],v10: _IorT[T10],) -> Intersection[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10]: ...
+    @overload
+    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](cls, v1: _IorT[T1],v2: _IorT[T2],v3: _IorT[T3],v4: _IorT[T4],v5: _IorT[T5],v6: _IorT[T6],v7: _IorT[T7],v8: _IorT[T8],v9: _IorT[T9],v10: _IorT[T10],v11: _IorT[T11],) -> Intersection[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11]: ...
+    @overload
+    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](cls, v1: _IorT[T1],v2: _IorT[T2],v3: _IorT[T3],v4: _IorT[T4],v5: _IorT[T5],v6: _IorT[T6],v7: _IorT[T7],v8: _IorT[T8],v9: _IorT[T9],v10: _IorT[T10],v11: _IorT[T11],v12: _IorT[T12],) -> Intersection[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11 | T12]: ...
+    @overload
+    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](cls, v1: _IorT[T1],v2: _IorT[T2],v3: _IorT[T3],v4: _IorT[T4],v5: _IorT[T5],v6: _IorT[T6],v7: _IorT[T7],v8: _IorT[T8],v9: _IorT[T9],v10: _IorT[T10],v11: _IorT[T11],v12: _IorT[T12],v13: _IorT[T13],) -> Intersection[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11 | T12 | T13]: ...
+    @overload
+    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14](cls, v1: _IorT[T1],v2: _IorT[T2],v3: _IorT[T3],v4: _IorT[T4],v5: _IorT[T5],v6: _IorT[T6],v7: _IorT[T7],v8: _IorT[T8],v9: _IorT[T9],v10: _IorT[T10],v11: _IorT[T11],v12: _IorT[T12],v13: _IorT[T13],v14: _IorT[T14],) -> Intersection[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11 | T12 | T13 | T14]: ...
+    @overload
+    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15](cls, v1: _IorT[T1],v2: _IorT[T2],v3: _IorT[T3],v4: _IorT[T4],v5: _IorT[T5],v6: _IorT[T6],v7: _IorT[T7],v8: _IorT[T8],v9: _IorT[T9],v10: _IorT[T10],v11: _IorT[T11],v12: _IorT[T12],v13: _IorT[T13],v14: _IorT[T14],v15: _IorT[T15],) -> Intersection[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11 | T12 | T13 | T14 | T15]: ...
+    @overload
+    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16](cls, v1: _IorT[T1],v2: _IorT[T2],v3: _IorT[T3],v4: _IorT[T4],v5: _IorT[T5],v6: _IorT[T6],v7: _IorT[T7],v8: _IorT[T8],v9: _IorT[T9],v10: _IorT[T10],v11: _IorT[T11],v12: _IorT[T12],v13: _IorT[T13],v14: _IorT[T14],v15: _IorT[T15],v16: _IorT[T16],) -> Intersection[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11 | T12 | T13 | T14 | T15 | T16]: ...
+
+    def __new__(cls, *vs : Any) -> Intersection[UnionType]: ... 
+    """
+    NOTE: Runtime types will still track accurately, but for static checking we quit after 16-wide constructor calls.
+    You can always do `Intersection(T1,...,T16) & Intersection(T17,...) & ...` if you *really* want all the types.
+    """
+    #
+    #
+    #
     
     def __init__[IncomingItemTs](self, *values: IncomingItemTs, **kwargs: IncomingItemTs) -> None:
         """
@@ -217,7 +265,15 @@ class Intersection[ItemTs](metaclass=IntersectionMeta):
     @classmethod
     def __class_getitem__[OtherItemTs](cls, item: TypeForm[OtherItemTs] | OtherItemTs) -> IntersectionMeta[OtherItemTs]: ...
     
-    def __getitem__[ItemT](self, types: type[ItemT] | TypeForm[ItemT] | tuple[type[ItemTs], ...]) -> Intersection[ItemTs]:
+    #
+    # NOTE: For the __class_getitem__, the `OtherItemTs` is not evaluated to a runtime UnionType object, and so the above type hints
+    # successfully propagate. Unfortunately, for __getitem__, the type is already evaluated to UnionType before we can intercept it;
+    # and while 'TypeForm' should resolve the issue, requiring the caller to annotate with TypeForm[A|B|...] is unacceptable.
+    # 
+    # Ideally, TypeForm (or perhaps TypeExpr by the time of Python 3.15+) will be able to capture such annotations before they can
+    # be evaluated to an opqque UnionType. If this is specified, it's probably in PEP 747.
+    #
+    def __getitem__[OtherItemTs](self, types: TypeForm[OtherItemTs] | OtherItemTs) -> Intersection[OtherItemTs]:
         """
         Extract a subset of types, returning a new Intersection.
         
@@ -270,13 +326,7 @@ class Intersection[ItemTs](metaclass=IntersectionMeta):
         """
         ...
 
-    @overload
-    def to[ItemT](self, typ: type[ItemT]) -> ItemT: ...
-    
-    @overload
-    def to[ManyItemT](self, *types: type[ManyItemT]) -> tuple[ManyItemT]: ...
-    
-    def to(self, *types: type) -> Any:
+    def to[ItemT](self, typ: type[ItemT]) -> ItemT:
         """
         Extract raw values by type.
         
