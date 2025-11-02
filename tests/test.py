@@ -3,9 +3,6 @@ Comprehensive Test Suite for Intersection Type System
 
 This validates all the planned functionality from the specification.
 """
-
-import sys
-from typing_extensions import TypeForm
 from product_types import Intersection
 
 type FloatIntStr = Intersection[float | int | str]
@@ -64,11 +61,12 @@ def test_type_construction():
     # Error on invalid subset
     try:
         # This should fail at instance creation time, not type creation
-        str_int_instance = Intersection[str | int]
+        str_int_instance = Intersection[str | int]("hello", 5)
+        str_int_instance[bool]
         # Trying to extract bool from str|int should fail
         print("  Note: Type-level validation happens at runtime during extraction")
     except:
-        pass
+        print("Successfully thrown")
     
     print("✓ Type construction works")
 
@@ -158,7 +156,7 @@ def test_partial_extraction():
     float_int_str = Intersection(5, "hello", 0.5)
     
     # Extract subset - should return Intersection
-    float_int = float_int_str[float | int]
+    float_int = float_int_str[float | int] # NOTE: At runtime this will work, but 
     
     assert isinstance(float_int, Intersection), "Should return Intersection"
     assert float in float_int, "Should contain float"
