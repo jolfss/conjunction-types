@@ -23,6 +23,8 @@ Requires Python 3.12 or later.
 
 `Conjunction[A | B | C]` represents a container holding exactly one value of each type `A`, `B`, and `C`.
 
+Accurate type hints are provided throughout.
+
 ```python
 from conjunction_types import Conjunction
 
