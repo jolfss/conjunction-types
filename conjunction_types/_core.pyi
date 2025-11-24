@@ -21,21 +21,6 @@ class ConjunctionMeta[ItemTs](type):
     ) -> Conjunction[ItemTs]:
         ...
 
-    # NOTE: Pyright evaluates the raw `OtherItemTs` in the Conjunction class, so by the time we get to this metaclass
-    # call, A | B | C has already evaluated to UnionType (which has no type parameters to inspect). Thus, to satisfy
-    # the type checker, we override __class_getitem__ in Conjunction to provide annotations.
-    #
-    # def __getitem__[OtherItemTs](cls, item: TypeForm[OtherItemTs] | OtherItemTs) -> ConjunctionMeta[OtherItemTs]:
-    #     """
-    #     Type constructor: Conjunction[A | B | C]
-        
-    #     Supports:
-    #     - Conjunction[float | int | str]
-    #     - Conjunction[float, int, str] (via tuple unpacking)
-    #     - Conjunction[Conjunction[float] | int] (flattening)
-    #     """
-    #     ...
-    
     def __eq__(cls, other: Any) -> bool: ...
     
     def __hash__(cls) -> int:...
@@ -48,9 +33,9 @@ class ConjunctionMeta[ItemTs](type):
     
     def __repr__(cls) -> str: ...
     
-    def __and__[I,T](cls : type[ConjOrType[I]], other: ConjOrType[T]) -> Conjunction[I | T]: ...
+    def __and__[I,T](cls : type[ConjOrType[I]], other: ConjOrT[T]) -> Conjunction[I | T]: ...
 
-    def __rand__[I,T](cls : type[ConjOrType[I]], other: ConjOrType[T]) -> Conjunction[I | T]: ...
+    def __rand__[I,T](cls : type[ConjOrType[I]], other: ConjOrT[T]) -> Conjunction[I | T]: ...
     
     def __instancecheck__(cls, instance: Any) -> bool: ...
 
