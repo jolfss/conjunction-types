@@ -14,7 +14,7 @@ class TestTypeSubsetChecking:
     def test_superset_not_in_subset(self):
         """Superset should not be in subset"""
         float_int_str = Conjunction[float | int | str]
-        assert not (Conjunction[float | int | str | bool] in float_int_str)
+        assert Conjunction[float | int | str | bool] not in float_int_str
 
     def test_single_type_checking(self):
         """Single types should be checkable"""
@@ -132,14 +132,14 @@ class TestDerivedTypes:
         FloatIntStrBool = Conjunction[str | int | bool | float]
 
         assert float in FloatIntStrBool
-        assert not (dict in FloatIntStrBool)
+        assert dict not in FloatIntStrBool
 
     def test_subset_checking_on_alias(self):
         """Subset checking on type alias"""
         FloatIntStrBool = Conjunction[str | int | bool | float]
 
         assert Conjunction[float | str] in FloatIntStrBool
-        assert not (Conjunction[float | str | dict] in FloatIntStrBool)
+        assert Conjunction[float | str | dict] not in FloatIntStrBool
 
     def test_iteration_over_types(self):
         """Should be able to iterate over component types"""
@@ -197,7 +197,7 @@ class TestPartialExtraction:
         assert isinstance(float_int, Conjunction)
         assert float in float_int
         assert int in float_int
-        assert not (str in float_int)
+        assert str not in float_int
 
     def test_value_preservation(self):
         """Values should be preserved in partial extraction"""
@@ -231,7 +231,7 @@ class TestConjunctionOperator:
 
         result = (float_int & bool_int) & bool_float
 
-        assert result.to(bool) == False
+        assert not result.to(bool)
         assert result.to(float) == 1.0
         assert result.to(int) == 42
 
@@ -252,7 +252,7 @@ class TestInstanceTypeChecking:
     def test_missing_type_membership(self):
         """Missing type should return False"""
         float_int_str = Conjunction(5, "hello", 0.5)
-        assert not ((float | str | bool) in float_int_str)
+        assert (float | str | bool) not in float_int_str
 
 
 class TestIteration:
@@ -304,7 +304,7 @@ class TestHashability:
         hash2 = hash(obj2)
         hash3 = hash(obj3)
 
-        assert hash1 == hash2
+        assert hash1 == hash2 != hash3
 
     def test_use_in_sets(self):
         """Should be usable in sets"""
@@ -360,7 +360,7 @@ class TestSetDifference:
 
         assert float in float_int
         assert int in float_int
-        assert not (bool in float_int)
+        assert bool not in float_int
 
     def test_remove_multiple_types(self):
         """Should remove multiple types"""
@@ -368,8 +368,8 @@ class TestSetDifference:
         just_float = float_int_bool / (bool | int)
 
         assert float in just_float
-        assert not (bool in just_float)
-        assert not (int in just_float)
+        assert bool not in just_float
+        assert int not in just_float
 
 
 class TestTypeErrors:
