@@ -318,8 +318,17 @@ class Conjunction(metaclass=ConjunctionMeta):
                     else:
                         data[typ] = val
             else:
-                # Infer type from value
-                typ = type(value)
+                # Check if this value was created with a minted constructor
+                from ._mint import get_minted_type
+                minted = get_minted_type(value)
+
+                if minted is not None:
+                    # Use the minted constructor as the key
+                    typ = minted
+                else:
+                    # Infer type from value
+                    typ = type(value)
+
                 if typ in data:
                     # Right-most value takes precedence (associativity)
                     data[typ] = value
@@ -553,8 +562,26 @@ class Conjunction(metaclass=ConjunctionMeta):
         """String representation showing types and values."""
         if not self._data:
             return 'Conjunction()'
-        
-        items = [f'{typ.__name__}={repr(val)}' for typ, val in self._data.items()]
+
+        from ._mint import get_mint_name
+
+        items = []
+        for typ, val in self._data.items():
+            # Check if this is a minted constructor
+            mint_name = get_mint_name(typ) if callable(typ) else None
+
+            if mint_name is not None:
+                # Use the mint name
+                type_str = mint_name
+            elif hasattr(typ, '__name__'):
+                # Regular type
+                type_str = typ.__name__
+            else:
+                # Fallback
+                type_str = str(typ)
+
+            items.append(f'{type_str}={repr(val)}')
+
         return f'Conjunction({", ".join(items)})'
     
     def __len__(self) -> int:
