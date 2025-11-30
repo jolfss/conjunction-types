@@ -24,7 +24,7 @@ Usage:
 
 from __future__ import annotations
 
-from typing import Any, Union, get_args, get_origin, Iterator, ClassVar
+from typing import Any, Union, get_args, get_origin, Iterator, ClassVar, GenericAlias
 from types import GenericAlias, UnionType
 import weakref
 
@@ -389,7 +389,13 @@ class Conjunction(metaclass=ConjunctionMeta):
         # Check all types are present
         missing = type_set - set(self._data.keys())
         if missing:
-            raise KeyError(f"Types not in Conjunction: {missing}")
+            invalid_generics = set()
+            for m in missing:
+                if isinstance(m, GenericAlias):
+                    invalid_generics.add(m)
+            if len(invalid_generics) > 0:
+                raise KeyError(F"GenericAlias(es) cannot index Conjunctions because Python erases types at runtime: {invalid_generics}. Consider using `conjunction_types.mint` or `typing.NewType` to create a distinct concrete type.")
+            raise KeyError(f"The following types are not bound by this Conjunction: {missing}.")
         
         # Extract subset
         new_data = {t: self._data[t] for t in type_set}
@@ -459,7 +465,9 @@ class Conjunction(metaclass=ConjunctionMeta):
             obj.to(float, int, str) -> (3.14, 5, "hello")
         """
         if typ not in self._data:
-            raise KeyError(f"Type {typ} not in Conjunction")
+            if isinstance(typ, GenericAlias):
+                raise KeyError(F"GenericAlias(es) cannot index Conjunctions because Python erases types at runtime: {typ}. Consider using `conjunction_types.mint` or `typing.NewType` to create a concrete type instead.")
+            raise KeyError(f"The following type is not bound by this Conjunction: {typ}.")
         return self._data[typ]
      
     def __and__(self, other: Any) -> Conjunction:

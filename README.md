@@ -267,6 +267,110 @@ for typ, wrapped in c.items():
     assert wrapped.to(typ) is not None
 ```
 
+## NDJSON Serialization (Optional Extension)
+
+The optional `ndjson` extension provides utilities for serializing and deserializing Conjunction instances to NDJSON (newline-delimited JSON) format. This is useful for incremental logging, data persistence, and resumption workflows.
+
+```bash
+# Install with ndjson support (no extra dependencies required)
+pip install conjunction-types[ndjson]
+```
+
+### Basic Usage
+
+```python
+from conjunction_types import Conjunction
+from conjunction_types.ndjson import NDJSONFile
+
+# Create and write Conjunctions to file
+file = NDJSONFile("data.ndjson")
+file.append(Conjunction(42, "alice", {"role": "admin"}))
+file.append(Conjunction(100, "bob", {"role": "user"}))
+
+# Read back
+for conj in file.read():
+    print(conj.to(int), conj.to(str))  # 42 alice, 100 bob
+```
+
+### Minting Types for Serialization
+
+**Python's type erasure problem:** At runtime, `Conjunction([1,2,3])` stores the key as `list`, not `list[int]`, because generic type information is erased. To preserve generic types in serialization or to create multiple "slots" for the same base type, use `mint()`:
+
+```python
+from conjunction_types import Conjunction, mint
+
+# Mint creates a distinct type constructor with a stable name
+IntList = mint("IntList", list[int])
+StrList = mint("StrList", list[str])
+
+# Each minted constructor creates tagged values
+c = Conjunction(IntList([1, 2, 3]), StrList(["a", "b"]), [4, 5, 6])
+
+# Minted types are distinct from each other and from the base type
+assert c.to(IntList) == [1, 2, 3]
+assert c.to(StrList) == ["a", "b"]
+assert c.to(list) == [4, 5, 6]  # Unminted list
+
+# When serialized, mint names are preserved
+from conjunction_types.ndjson import NDJSONFile
+
+file = NDJSONFile("data.ndjson")
+file.append(c)
+
+# Deserializes correctly with type distinctions intact
+for restored in file.read():
+    assert restored.to(IntList) == [1, 2, 3]
+    assert restored.to(StrList) == ["a", "b"]
+```
+
+### Custom Type Serialization
+
+For non-JSON-serializable types, register custom serializers:
+
+```python
+from conjunction_types import Conjunction
+from conjunction_types.ndjson import mint, NDJSONFile
+from pathlib import Path
+
+# Register custom serialization logic
+PathType = mint(
+    "PathType",
+    Path,
+    serializer=str,  # Path -> str
+    deserializer=Path  # str -> Path
+)
+
+# Use in Conjunctions
+file = NDJSONFile("paths.ndjson")
+file.append(Conjunction(PathType(Path("/tmp")), "config"))
+
+# Deserializes correctly
+for conj in file.read():
+    path: Path = conj.to(PathType)
+    assert isinstance(path, Path)
+```
+
+### Type Registry for Global Serialization
+
+For types used across multiple files, use a shared `TypeRegistry`:
+
+```python
+from conjunction_types.ndjson import TypeRegistry, NDJSONFile
+from pathlib import Path
+
+# Create a registry with custom serialization logic
+registry = TypeRegistry()
+registry.register(
+    Path,
+    serializer=str,
+    deserializer=Path,
+)
+
+# Use the same registry for all files
+file1 = NDJSONFile("data1.ndjson", registry=registry)
+file2 = NDJSONFile("data2.ndjson", registry=registry)
+```
+
 
 
 ---
