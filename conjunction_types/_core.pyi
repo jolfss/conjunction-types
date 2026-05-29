@@ -1,138 +1,271 @@
 from __future__ import annotations
 
-from types import UnionType
-from typing import Any, overload, Iterator
+from typing import Any, Iterator, overload
 
 type ConjOrT[T] = Conjunction[T] | T
-type ConjOrType[T] = Conjunction[T] | type[T]
 
-class ConjunctionMeta[ItemTs](type): 
-
+class ConjunctionMeta[ItemTs](type):
     @overload
-    def __new__[NewItemTs](mcs, name:str, conj: Conjunction[NewItemTs], **kwargs) -> Conjunction[NewItemTs]: ...
-
+    def __getitem__[T](cls, item: type[Conjunction[T]]) -> type[Conjunction[T]]: ...
     @overload
-    def __new__(
-        mcs, 
-        name: str, 
-        bases: tuple[type, ...], 
-        namespace: dict[str, Any],
-        types: frozenset[type] | None = None
-    ) -> Conjunction[ItemTs]:
-        ...
-
+    def __getitem__[T](cls, item: Conjunction[T]) -> type[Conjunction[T]]: ...
+    @overload
+    def __getitem__[T](cls, item: T) -> type[Conjunction[T]]: ...
     def __eq__(cls, other: Any) -> bool: ...
-    
-    def __hash__(cls) -> int:...
-
-    def __contains__[OtherItemTs](cls, item: type[OtherItemTs] | ConjunctionMeta[OtherItemTs]) -> bool: ...
-
-    def __iter__(cls) -> Iterator[type]:...
-
-    def __len__(cls) -> int:... 
-    
+    def __hash__(cls) -> int: ...
+    def __contains__(cls, item: object) -> bool: ...
+    def __iter__(cls) -> Iterator[type]: ...
+    def __len__(cls) -> int: ...
     def __repr__(cls) -> str: ...
-    
-    def __and__[I,T](cls : type[ConjOrType[I]], other: ConjOrT[T]) -> Conjunction[I | T]: ...
-
-    def __rand__[I,T](cls : type[ConjOrType[I]], other: ConjOrT[T]) -> Conjunction[I | T]: ...
-    
+    @overload
+    def __and__[I, T](cls: type[Conjunction[I]], other: type[Conjunction[T]]) -> type[Conjunction[I | T]]: ...
+    @overload
+    def __and__[I, T](cls: type[Conjunction[I]], other: type[T]) -> type[Conjunction[I | T]]: ...
+    @overload
+    def __rand__[I, T](cls: type[Conjunction[I]], other: type[Conjunction[T]]) -> type[Conjunction[I | T]]: ...
+    @overload
+    def __rand__[I, T](cls: type[Conjunction[I]], other: type[T]) -> type[Conjunction[I | T]]: ...
     def __instancecheck__(cls, instance: Any) -> bool: ...
-
     def __subclasscheck__(cls, subclass: Any) -> bool: ...
 
-
-class Conjunction[ItemTs](type, metaclass=ConjunctionMeta):
-    #
-    # NOTE: We enumerate these constructors since it's not possible to homogenize/flatten out any contained Conjunction[...] within the args.
-    # Ideally, we would be able to write something akin to...
-    #   def __new__[*Ts](cls, *vs : Unpack[tuple[*ConjOrType[Ts]]) -> Conjunction[Union[*Ts]]
-    #  
+class Conjunction[ItemTs](metaclass=ConjunctionMeta):
+    @property
+    def _typing_items(self) -> ItemTs: ...
     @overload
-    def __new__[T1](cls, v1: ConjOrT[T1]) -> Conjunction[T1]: ...
+    def __new__[T1](cls, v1: Conjunction[T1]) -> Conjunction[T1]: ...
     @overload
-    def __new__[T1, T2](cls, v1: ConjOrT[T1],v2: ConjOrT[T2],) -> Conjunction[T1 | T2]: ...
+    def __new__[T1](cls, v1: T1) -> Conjunction[T1]: ...
     @overload
-    def __new__[T1, T2, T3](cls, v1: ConjOrT[T1],v2: ConjOrT[T2],v3: ConjOrT[T3],) -> Conjunction[T1 | T2 | T3]: ...
+    def __new__[T1, T2](cls, v1: Conjunction[T1], v2: Conjunction[T2]) -> Conjunction[T1 | T2]: ...
     @overload
-    def __new__[T1, T2, T3, T4](cls, v1: ConjOrT[T1],v2: ConjOrT[T2],v3: ConjOrT[T3],v4: ConjOrT[T4],) -> Conjunction[T1 | T2 | T3 | T4]: ...
+    def __new__[T1, T2](cls, v1: Conjunction[T1], v2: T2) -> Conjunction[T1 | T2]: ...
     @overload
-    def __new__[T1, T2, T3, T4, T5](cls, v1: ConjOrT[T1],v2: ConjOrT[T2],v3: ConjOrT[T3],v4: ConjOrT[T4],v5: ConjOrT[T5],) -> Conjunction[T1 | T2 | T3 | T4 | T5]: ...
+    def __new__[T1, T2](cls, v1: T1, v2: Conjunction[T2]) -> Conjunction[T1 | T2]: ...
     @overload
-    def __new__[T1, T2, T3, T4, T5, T6](cls, v1: ConjOrT[T1],v2: ConjOrT[T2],v3: ConjOrT[T3],v4: ConjOrT[T4],v5: ConjOrT[T5],v6: ConjOrT[T6],) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6]: ...
+    def __new__[T1, T2](cls, v1: ConjOrT[T1], v2: ConjOrT[T2]) -> Conjunction[T1 | T2]: ...
     @overload
-    def __new__[T1, T2, T3, T4, T5, T6, T7](cls, v1: ConjOrT[T1],v2: ConjOrT[T2],v3: ConjOrT[T3],v4: ConjOrT[T4],v5: ConjOrT[T5],v6: ConjOrT[T6],v7: ConjOrT[T7],) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7]: ...
+    def __new__[T1, T2, T3](
+        cls,
+        v1: ConjOrT[T1],
+        v2: ConjOrT[T2],
+        v3: ConjOrT[T3],
+    ) -> Conjunction[T1 | T2 | T3]: ...
     @overload
-    def __new__[T1, T2, T3, T4, T5, T6, T7, T8](cls, v1: ConjOrT[T1],v2: ConjOrT[T2],v3: ConjOrT[T3],v4: ConjOrT[T4],v5: ConjOrT[T5],v6: ConjOrT[T6],v7: ConjOrT[T7],v8: ConjOrT[T8],) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8]: ...
+    def __new__[T1, T2, T3, T4](
+        cls,
+        v1: ConjOrT[T1],
+        v2: ConjOrT[T2],
+        v3: ConjOrT[T3],
+        v4: ConjOrT[T4],
+    ) -> Conjunction[T1 | T2 | T3 | T4]: ...
     @overload
-    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9](cls, v1: ConjOrT[T1],v2: ConjOrT[T2],v3: ConjOrT[T3],v4: ConjOrT[T4],v5: ConjOrT[T5],v6: ConjOrT[T6],v7: ConjOrT[T7],v8: ConjOrT[T8],v9: ConjOrT[T9],) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9]: ...
+    def __new__[T1, T2, T3, T4, T5](
+        cls,
+        v1: ConjOrT[T1],
+        v2: ConjOrT[T2],
+        v3: ConjOrT[T3],
+        v4: ConjOrT[T4],
+        v5: ConjOrT[T5],
+    ) -> Conjunction[T1 | T2 | T3 | T4 | T5]: ...
     @overload
-    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](cls, v1: ConjOrT[T1],v2: ConjOrT[T2],v3: ConjOrT[T3],v4: ConjOrT[T4],v5: ConjOrT[T5],v6: ConjOrT[T6],v7: ConjOrT[T7],v8: ConjOrT[T8],v9: ConjOrT[T9],v10: ConjOrT[T10],) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10]: ...
+    def __new__[T1, T2, T3, T4, T5, T6](
+        cls,
+        v1: ConjOrT[T1],
+        v2: ConjOrT[T2],
+        v3: ConjOrT[T3],
+        v4: ConjOrT[T4],
+        v5: ConjOrT[T5],
+        v6: ConjOrT[T6],
+    ) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6]: ...
     @overload
-    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](cls, v1: ConjOrT[T1],v2: ConjOrT[T2],v3: ConjOrT[T3],v4: ConjOrT[T4],v5: ConjOrT[T5],v6: ConjOrT[T6],v7: ConjOrT[T7],v8: ConjOrT[T8],v9: ConjOrT[T9],v10: ConjOrT[T10],v11: ConjOrT[T11],) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11]: ...
+    def __new__[T1, T2, T3, T4, T5, T6, T7](
+        cls,
+        v1: ConjOrT[T1],
+        v2: ConjOrT[T2],
+        v3: ConjOrT[T3],
+        v4: ConjOrT[T4],
+        v5: ConjOrT[T5],
+        v6: ConjOrT[T6],
+        v7: ConjOrT[T7],
+    ) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7]: ...
     @overload
-    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](cls, v1: ConjOrT[T1],v2: ConjOrT[T2],v3: ConjOrT[T3],v4: ConjOrT[T4],v5: ConjOrT[T5],v6: ConjOrT[T6],v7: ConjOrT[T7],v8: ConjOrT[T8],v9: ConjOrT[T9],v10: ConjOrT[T10],v11: ConjOrT[T11],v12: ConjOrT[T12],) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11 | T12]: ...
+    def __new__[T1, T2, T3, T4, T5, T6, T7, T8](
+        cls,
+        v1: ConjOrT[T1],
+        v2: ConjOrT[T2],
+        v3: ConjOrT[T3],
+        v4: ConjOrT[T4],
+        v5: ConjOrT[T5],
+        v6: ConjOrT[T6],
+        v7: ConjOrT[T7],
+        v8: ConjOrT[T8],
+    ) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8]: ...
     @overload
-    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](cls, v1: ConjOrT[T1],v2: ConjOrT[T2],v3: ConjOrT[T3],v4: ConjOrT[T4],v5: ConjOrT[T5],v6: ConjOrT[T6],v7: ConjOrT[T7],v8: ConjOrT[T8],v9: ConjOrT[T9],v10: ConjOrT[T10],v11: ConjOrT[T11],v12: ConjOrT[T12],v13: ConjOrT[T13],) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11 | T12 | T13]: ...
+    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9](
+        cls,
+        v1: ConjOrT[T1],
+        v2: ConjOrT[T2],
+        v3: ConjOrT[T3],
+        v4: ConjOrT[T4],
+        v5: ConjOrT[T5],
+        v6: ConjOrT[T6],
+        v7: ConjOrT[T7],
+        v8: ConjOrT[T8],
+        v9: ConjOrT[T9],
+    ) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9]: ...
     @overload
-    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14](cls, v1: ConjOrT[T1],v2: ConjOrT[T2],v3: ConjOrT[T3],v4: ConjOrT[T4],v5: ConjOrT[T5],v6: ConjOrT[T6],v7: ConjOrT[T7],v8: ConjOrT[T8],v9: ConjOrT[T9],v10: ConjOrT[T10],v11: ConjOrT[T11],v12: ConjOrT[T12],v13: ConjOrT[T13],v14: ConjOrT[T14],) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11 | T12 | T13 | T14]: ...
+    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
+        cls,
+        v1: ConjOrT[T1],
+        v2: ConjOrT[T2],
+        v3: ConjOrT[T3],
+        v4: ConjOrT[T4],
+        v5: ConjOrT[T5],
+        v6: ConjOrT[T6],
+        v7: ConjOrT[T7],
+        v8: ConjOrT[T8],
+        v9: ConjOrT[T9],
+        v10: ConjOrT[T10],
+    ) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10]: ...
     @overload
-    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15](cls, v1: ConjOrT[T1],v2: ConjOrT[T2],v3: ConjOrT[T3],v4: ConjOrT[T4],v5: ConjOrT[T5],v6: ConjOrT[T6],v7: ConjOrT[T7],v8: ConjOrT[T8],v9: ConjOrT[T9],v10: ConjOrT[T10],v11: ConjOrT[T11],v12: ConjOrT[T12],v13: ConjOrT[T13],v14: ConjOrT[T14],v15: ConjOrT[T15],) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11 | T12 | T13 | T14 | T15]: ...
+    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](
+        cls,
+        v1: ConjOrT[T1],
+        v2: ConjOrT[T2],
+        v3: ConjOrT[T3],
+        v4: ConjOrT[T4],
+        v5: ConjOrT[T5],
+        v6: ConjOrT[T6],
+        v7: ConjOrT[T7],
+        v8: ConjOrT[T8],
+        v9: ConjOrT[T9],
+        v10: ConjOrT[T10],
+        v11: ConjOrT[T11],
+    ) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11]: ...
     @overload
-    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16](cls, v1: ConjOrT[T1],v2: ConjOrT[T2],v3: ConjOrT[T3],v4: ConjOrT[T4],v5: ConjOrT[T5],v6: ConjOrT[T6],v7: ConjOrT[T7],v8: ConjOrT[T8],v9: ConjOrT[T9],v10: ConjOrT[T10],v11: ConjOrT[T11],v12: ConjOrT[T12],v13: ConjOrT[T13],v14: ConjOrT[T14],v15: ConjOrT[T15],v16: ConjOrT[T16],) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11 | T12 | T13 | T14 | T15 | T16]: ...
-    #
-    # Runtime types will still track accurately, but for static checking we quit after 16-wide constructor calls.
-    # You can always do `Conjunction(T1,...,T16) & Conjunction(T17,...) & ...` if you *really* want all the types.
-    #
+    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](
+        cls,
+        v1: ConjOrT[T1],
+        v2: ConjOrT[T2],
+        v3: ConjOrT[T3],
+        v4: ConjOrT[T4],
+        v5: ConjOrT[T5],
+        v6: ConjOrT[T6],
+        v7: ConjOrT[T7],
+        v8: ConjOrT[T8],
+        v9: ConjOrT[T9],
+        v10: ConjOrT[T10],
+        v11: ConjOrT[T11],
+        v12: ConjOrT[T12],
+    ) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11 | T12]: ...
     @overload
-    def __new__(cls, *vs : Any) -> Conjunction[UnionType]: ... 
-    #
-    #
-    #
-    
-    def __init__[IncomingItemTs](self, *values: IncomingItemTs, **kwargs: IncomingItemTs) -> None: ...
-    
-    def __setattr__(self, name: str, value: ItemTs) -> None:...
-    
-    def __delattr__(self, name: str) -> None:...
-
-
+    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](
+        cls,
+        v1: ConjOrT[T1],
+        v2: ConjOrT[T2],
+        v3: ConjOrT[T3],
+        v4: ConjOrT[T4],
+        v5: ConjOrT[T5],
+        v6: ConjOrT[T6],
+        v7: ConjOrT[T7],
+        v8: ConjOrT[T8],
+        v9: ConjOrT[T9],
+        v10: ConjOrT[T10],
+        v11: ConjOrT[T11],
+        v12: ConjOrT[T12],
+        v13: ConjOrT[T13],
+    ) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11 | T12 | T13]: ...
+    @overload
+    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14](
+        cls,
+        v1: ConjOrT[T1],
+        v2: ConjOrT[T2],
+        v3: ConjOrT[T3],
+        v4: ConjOrT[T4],
+        v5: ConjOrT[T5],
+        v6: ConjOrT[T6],
+        v7: ConjOrT[T7],
+        v8: ConjOrT[T8],
+        v9: ConjOrT[T9],
+        v10: ConjOrT[T10],
+        v11: ConjOrT[T11],
+        v12: ConjOrT[T12],
+        v13: ConjOrT[T13],
+        v14: ConjOrT[T14],
+    ) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11 | T12 | T13 | T14]: ...
+    @overload
+    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15](
+        cls,
+        v1: ConjOrT[T1],
+        v2: ConjOrT[T2],
+        v3: ConjOrT[T3],
+        v4: ConjOrT[T4],
+        v5: ConjOrT[T5],
+        v6: ConjOrT[T6],
+        v7: ConjOrT[T7],
+        v8: ConjOrT[T8],
+        v9: ConjOrT[T9],
+        v10: ConjOrT[T10],
+        v11: ConjOrT[T11],
+        v12: ConjOrT[T12],
+        v13: ConjOrT[T13],
+        v14: ConjOrT[T14],
+        v15: ConjOrT[T15],
+    ) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11 | T12 | T13 | T14 | T15]: ...
+    @overload
+    def __new__[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16](
+        cls,
+        v1: ConjOrT[T1],
+        v2: ConjOrT[T2],
+        v3: ConjOrT[T3],
+        v4: ConjOrT[T4],
+        v5: ConjOrT[T5],
+        v6: ConjOrT[T6],
+        v7: ConjOrT[T7],
+        v8: ConjOrT[T8],
+        v9: ConjOrT[T9],
+        v10: ConjOrT[T10],
+        v11: ConjOrT[T11],
+        v12: ConjOrT[T12],
+        v13: ConjOrT[T13],
+        v14: ConjOrT[T14],
+        v15: ConjOrT[T15],
+        v16: ConjOrT[T16],
+    ) -> Conjunction[T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11 | T12 | T13 | T14 | T15 | T16]: ...
+    @overload
+    def __new__(cls, *values: Any) -> Conjunction[Any]: ...
+    def __init__(self, *values: Any, **kwargs: Any) -> None: ...
+    def __setattr__(self, name: str, value: Any) -> None: ...
+    def __delattr__(self, name: str) -> None: ...
     @classmethod
-    def __class_getitem__[OtherItemTs](cls, item: ConjOrType[OtherItemTs]) -> Conjunction[OtherItemTs]: ...
-    
-    #
-    # NOTE: For the __class_getitem__, the `OtherItemTs` is not evaluated to a runtime UnionType object, and so the above type hints
-    # successfully propagate. Unfortunately, for __getitem__, the type is already evaluated to UnionType before we can intercept it;
-    # and while 'TypeForm' should resolve the issue, requiring the caller to annotate with TypeForm[A|B|...] is unacceptable.
-    # 
-    # Ideally, TypeForm (or perhaps TypeForm by the time of Python 3.15+) will be able to capture such annotations before they can
-    # be evaluated to an opqque UnionType. If this is specified, it's probably in PEP 747.
-    #
-    def __getitem__[OtherItemTs](self, types: ConjOrType[OtherItemTs]) -> Conjunction[OtherItemTs]: ...
-    
-    def __contains__(self, item: type[ItemTs]) -> bool: ...
-
-    def __iter__(self) -> Iterator[type[ItemTs]]: ... 
-
+    @overload
+    def __class_getitem__[T](cls, item: type[Conjunction[T]]) -> type[Conjunction[T]]: ...
+    @classmethod
+    @overload
+    def __class_getitem__[T](cls, item: Conjunction[T]) -> type[Conjunction[T]]: ...
+    @classmethod
+    @overload
+    def __class_getitem__[T](cls, item: T) -> type[Conjunction[T]]: ...
+    @overload
+    def __getitem__[T](self, types: type[T]) -> Conjunction[T]: ...
+    @overload
+    def __getitem__[T](self, types: T) -> Conjunction[T]: ...
+    def __contains__(self, item: object) -> bool: ...
+    def __iter__(self) -> Iterator[type[ItemTs]]: ...
     def keys(self) -> Iterator[type[ItemTs]]: ...
-    
-    def values(self) -> Iterator[Conjunction[ItemTs]]:...
-
-    def items(self) -> Iterator[tuple[type, Conjunction[ItemTs]]]:...
-
+    def values(self) -> Iterator[Conjunction[ItemTs]]: ...
+    def items(self) -> Iterator[tuple[type[ItemTs], Conjunction[ItemTs]]]: ...
     def to[ItemT](self, typ: type[ItemT]) -> ItemT: ...
-
-    def __and__[OtherItemTs](self, other: ConjOrT[OtherItemTs]) -> Conjunction[ItemTs | OtherItemTs]: ...
-    
-    def __rand__[OtherItemT](self, other: OtherItemT) -> Conjunction[ItemTs | OtherItemT]: ...
-    
-    def __truediv__(self, types: type) -> Conjunction[Any]: ...
-    
+    @overload
+    def __and__[T](self, other: Conjunction[T]) -> Conjunction[ItemTs | T]: ...
+    @overload
+    def __and__[T](self, other: T) -> Conjunction[ItemTs | T]: ...
+    @overload
+    def __rand__[T](self, other: Conjunction[T]) -> Conjunction[ItemTs | T]: ...
+    @overload
+    def __rand__[T](self, other: T) -> Conjunction[ItemTs | T]: ...
+    def __truediv__(self, types: object) -> Conjunction[Any]: ...
     def __eq__(self, other: Any) -> bool: ...
-
     def __hash__(self) -> int: ...
-    
-    def __repr__(self) -> str:...
-    
-    def __len__(self) -> int:...
-
+    def __repr__(self) -> str: ...
+    def __len__(self) -> int: ...
